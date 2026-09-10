@@ -1,0 +1,8 @@
+services:
+  countdown:
+    build: .
+    image: final-countdown
+    container_name: final-countdown
+    ports:
+      - "8080:80"
+    restart: unless-stopped

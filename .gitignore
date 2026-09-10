@@ -1,0 +1,11 @@
+# OS / editor cruft
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+.vscode/
+.idea/
+
+# scratch
+*.tmp
+*.log

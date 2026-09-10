@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Final Countdown</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%E2%8F%B3</text></svg>">
+<style>
+  :root {
+    --bg: #05060a;
+    /* hue of the accent; JS slides it 186 (cyan) -> 320 (hot magenta) as time runs out */
+    --accent-h: 186;
+    --accent: hsl(var(--accent-h) 100% 62%);
+    --glow: hsl(var(--accent-h) 100% 62% / 0.85);
+    --line: hsl(var(--accent-h) 100% 62% / 0.55);
+    --dim: #6b7a8c;
+    --horizon-y: 58%;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", Consolas, "Roboto Mono", monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { height: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--accent);
+    font-family: var(--mono);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow: hidden;
+  }
+
+  /* ---------- scene ---------- */
+
+  .scene {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    background: linear-gradient(
+      to bottom,
+      #05060a 0%,
+      #080a1a 24%,
+      #170a33 43%,
+      #43124d 55%,
+      #2a0b33 var(--horizon-y),
+      #0a0612 calc(var(--horizon-y) + 6%),
+      #06040c 100%
+    );
+  }
+
+  .sky {
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: var(--horizon-y);
+    overflow: hidden;
+  }
+
+  .stars {
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 100%;
+    background-image:
+      radial-gradient(1px 1px at 14px 22px, rgba(255,255,255,0.85) 50%, transparent 51%),
+      radial-gradient(1px 1px at 71px 96px, rgba(255,255,255,0.55) 50%, transparent 51%),
+      radial-gradient(1.6px 1.6px at 133px 47px, rgba(255,255,255,0.75) 50%, transparent 51%),
+      radial-gradient(1px 1px at 39px 148px, rgba(255,255,255,0.45) 50%, transparent 51%);
+    background-size: 130px 110px, 190px 150px, 260px 210px, 320px 260px;
+    animation: twinkle 7s ease-in-out infinite;
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 92%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 92%);
+  }
+
+  .sun-glow {
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    width: clamp(420px, 78vmin, 1000px);
+    aspect-ratio: 1;
+    transform: translate(-50%, -62%);
+    background: radial-gradient(
+      circle,
+      hsl(var(--accent-h) 100% 62% / 0.30) 0%,
+      hsl(320 100% 60% / 0.20) 34%,
+      transparent 68%
+    );
+    opacity: 0.35;
+  }
+
+  .sun {
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    width: clamp(240px, 38vmin, 500px);
+    aspect-ratio: 1;
+    transform: translate(-50%, -78%);
+    border-radius: 50%;
+    background: linear-gradient(
+      to bottom,
+      #fff6cf 0%,
+      #ffd85a 18%,
+      #ff9d3d 42%,
+      #ff3d7a 72%,
+      #d21ea8 100%
+    );
+    /* classic banded sun: solid on top, gaps widening toward the bottom */
+    --bands: linear-gradient(
+      to bottom,
+      #000 0 31%,
+      transparent 31% 33%,
+      #000 33% 40%,
+      transparent 40% 43%,
+      #000 43% 49.5%,
+      transparent 49.5% 53.5%,
+      #000 53.5% 59.5%,
+      transparent 59.5% 64.5%,
+      #000 64.5% 69.5%,
+      transparent 69.5% 75.5%,
+      #000 75.5% 79%,
+      transparent 79% 100%
+    );
+    -webkit-mask-image: var(--bands);
+    mask-image: var(--bands);
+  }
+
+  .horizon {
+    position: absolute;
+    left: -5%; right: -5%;
+    top: var(--horizon-y);
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--accent) 16%,
+      #ffffff 50%,
+      var(--accent) 84%,
+      transparent 100%
+    );
+    box-shadow: 0 0 22px var(--glow), 0 0 70px var(--glow);
+    opacity: 0.85;
+    will-change: transform, opacity;
+  }
+
+  .floor {
+    position: absolute;
+    left: 0; right: 0;
+    top: var(--horizon-y);
+    bottom: 0;
+    overflow: hidden;
+    perspective: 420px;
+    perspective-origin: 50% 0%;
+  }
+
+  .grid {
+    position: absolute;
+    left: -75%; right: -75%;
+    top: 0;
+    height: 150vh;
+    transform-origin: 50% 0;
+    transform: rotateX(80deg);
+    background-image:
+      repeating-linear-gradient(to right, var(--line) 0 2px, transparent 2px 72px),
+      repeating-linear-gradient(to bottom, var(--line) 0 2px, transparent 2px 72px);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 10%, #000 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 10%, #000 100%);
+    will-change: transform;
+  }
+
+  /* keeps the digits readable over the sun */
+  .scrim {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse 62% 34% at 50% 50%,
+      rgba(5, 6, 10, 0.34) 0%,
+      rgba(5, 6, 10, 0.16) 55%,
+      transparent 78%
+    );
+  }
+
+  /* scanline texture, on top of everything */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.025) 0px,
+      rgba(255, 255, 255, 0.025) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  }
+
+  /* ---------- clock ---------- */
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 1400px;
+    text-align: center;
+  }
+
+  .eyebrow {
+    margin: 0 0 clamp(12px, 3vh, 32px);
+    font-size: clamp(0.7rem, 1.8vw, 1.1rem);
+    font-weight: 500;
+    letter-spacing: 0.55em;
+    text-indent: 0.55em;
+    text-transform: uppercase;
+    color: #ffb3ec;
+    text-shadow: 0 0 12px rgba(255, 79, 216, 0.55);
+  }
+
+  .clock {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0 clamp(6px, 1.4vw, 20px);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .val {
+    display: block;
+    font-size: clamp(2.6rem, 8.5vw, 9rem);
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #f4feff;
+    text-shadow:
+      0 0 6px rgba(0, 0, 0, 0.85),
+      0 0 14px var(--glow),
+      0 0 40px var(--glow),
+      0 0 90px hsl(var(--accent-h) 100% 62% / 0.35);
+  }
+
+  .lbl {
+    margin-top: clamp(6px, 1.2vh, 16px);
+    font-size: clamp(0.55rem, 1.3vw, 0.9rem);
+    letter-spacing: 0.4em;
+    text-indent: 0.4em;
+    text-transform: uppercase;
+    color: #bccbdb;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.95), 0 0 16px rgba(0, 0, 0, 0.85);
+  }
+
+  .sep {
+    align-self: flex-start;
+    font-size: clamp(2.6rem, 8.5vw, 9rem);
+    line-height: 1;
+    font-weight: 700;
+    color: hsl(var(--accent-h) 100% 62% / 0.4);
+  }
+
+  /* centiseconds ride along with the seconds column */
+  .cs {
+    font-size: 0.42em;
+    color: #ff7ae0;
+    text-shadow:
+      0 0 6px rgba(0, 0, 0, 0.85),
+      0 0 12px rgba(255, 79, 216, 0.9),
+      0 0 30px rgba(255, 79, 216, 0.5);
+    vertical-align: baseline;
+    margin-left: 0.06em;
+  }
+
+  .target {
+    margin: clamp(24px, 6vh, 56px) 0 0;
+    font-size: clamp(0.7rem, 1.6vw, 1rem);
+    letter-spacing: 0.3em;
+    text-indent: 0.3em;
+    text-transform: uppercase;
+    color: #9fb0c2;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.95), 0 0 18px rgba(0, 0, 0, 0.85);
+  }
+
+  .done .val,
+  .done .sep,
+  .done .lbl { display: none; }
+
+  .done::before {
+    content: "TIME'S UP";
+    font-size: clamp(2.6rem, 11vw, 9rem);
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #fff;
+    text-shadow:
+      0 0 10px rgba(0, 0, 0, 0.85),
+      0 0 26px var(--glow),
+      0 0 70px var(--glow);
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.55; }
+    50%      { opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stars { animation: none; opacity: 0.8; }
+  }
+
+  /* phones: two rows, days+hours / minutes+seconds */
+  @media (max-width: 700px) {
+    :root { --horizon-y: 62%; }
+    .clock { gap: clamp(4px, 2vw, 14px) clamp(4px, 2vw, 14px); }
+    .val, .sep { font-size: clamp(2.8rem, 17vw, 5rem); }
+    .sep.mid { display: none; }
+    .brk { flex-basis: 100%; height: 0; }
+    .floor { perspective: 300px; }
+    .sun { width: clamp(190px, 54vmin, 300px); }
+  }
+  .brk { display: none; }
+  @media (max-width: 700px) { .brk { display: block; } }
+</style>
+</head>
+<body>
+  <div class="scene" aria-hidden="true">
+    <div class="sky">
+      <div class="stars"></div>
+      <div class="sun-glow" id="sunGlow"></div>
+      <div class="sun"></div>
+    </div>
+    <div class="horizon" id="horizon"></div>
+    <div class="floor"><div class="grid" id="grid"></div></div>
+    <div class="scrim"></div>
+  </div>
+
+  <div class="wrap">
+    <h1 class="eyebrow">The Final Countdown</h1>
+
+    <div class="clock" id="clock">
+      <div class="unit"><span class="val" id="d">00</span><span class="lbl">days</span></div>
+      <span class="sep">:</span>
+      <div class="unit"><span class="val" id="h">00</span><span class="lbl">hours</span></div>
+      <span class="brk"></span>
+      <span class="sep mid">:</span>
+      <div class="unit"><span class="val" id="m">00</span><span class="lbl">minutes</span></div>
+      <span class="sep">:</span>
+      <div class="unit">
+        <span class="val"><span id="s">00</span><span class="cs" id="cs">.00</span></span>
+        <span class="lbl">seconds</span>
+      </div>
+    </div>
+
+    <p class="target" id="target">Oct 29, 2026 &middot; 6:00 PM PT</p>
+  </div>
+
+<script>
+(function () {
+  // 6:00 PM Pacific on Oct 29, 2026 (PDT, UTC-7) as an absolute instant.
+  var TARGET = Date.parse('2026-10-30T01:00:00Z');
+
+  // Optional override so the same image can serve another date: ?t=2027-01-01T00:00:00Z
+  var override = new URLSearchParams(location.search).get('t');
+  if (override) {
+    var parsed = Date.parse(override);
+    if (!isNaN(parsed)) {
+      TARGET = parsed;
+      document.getElementById('target').textContent =
+        new Date(parsed).toLocaleString(undefined, {
+          dateStyle: 'medium', timeStyle: 'short'
+        }) + ' (local)';
+    }
+  }
+
+  var root = document.documentElement;
+  var clock = document.getElementById('clock');
+  var grid = document.getElementById('grid');
+  var horizon = document.getElementById('horizon');
+  var sunGlow = document.getElementById('sunGlow');
+
+  var el = {
+    d: document.getElementById('d'),
+    h: document.getElementById('h'),
+    m: document.getElementById('m'),
+    s: document.getElementById('s'),
+    cs: document.getElementById('cs')
+  };
+  var last = { d: null, h: null, m: null, s: null, cs: null };
+
+  var TILE = 72;      // grid tile size, must match the CSS gradients
+  var TILT = 80;      // floor rake, must match the CSS transform
+  var HUE_CALM = 186; // cyan
+  var HUE_HOT = 320;  // hot magenta
+
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var offset = 0;
+  var lastT = 0;
+  var lastHue = -1;
+  var done = false;
+
+  // Grid speed in px/s, interpolated on log10(seconds remaining) so it ramps
+  // continuously instead of stepping: calm a week out, hyperspace at the end.
+  var SPEED = [[6, 18], [5, 26], [4, 42], [3, 70], [2, 140], [1, 340], [0, 900]];
+
+  function speedFor(ms) {
+    var L = Math.log10(Math.max(ms, 1) / 1000);
+    if (L >= SPEED[0][0]) return SPEED[0][1];
+    if (L <= 0) return SPEED[SPEED.length - 1][1];
+    for (var i = 0; i < SPEED.length - 1; i++) {
+      var a = SPEED[i], b = SPEED[i + 1];
+      if (L <= a[0] && L >= b[0]) {
+        return a[1] + (b[1] - a[1]) * ((a[0] - L) / (a[0] - b[0]));
+      }
+    }
+    return SPEED[0][1];
+  }
+
+  // 0 while more than a day remains, 1 at zero - also on a log scale, so the
+  // palette keeps visibly moving through the last hour, minute and seconds.
+  function urgencyFor(ms) {
+    var span = Math.log10(86400);
+    var L = Math.log10(Math.max(ms, 1) / 1000);
+    if (L >= span) return 0;
+    if (L <= 0) return 1;
+    return (span - L) / span;
+  }
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function set(key, text) {
+    if (last[key] !== text) {
+      last[key] = text;
+      el[key].textContent = text;
+    }
+  }
+
+  function frame(now) {
+    if (now === undefined) now = performance.now();
+    var dt = lastT ? Math.min(0.05, (now - lastT) / 1000) : 0;
+    lastT = now;
+
+    var ms = TARGET - Date.now();
+    if (ms < 0) ms = 0;
+
+    set('d', pad((ms / 86400000) | 0));
+    set('h', pad(((ms / 3600000) | 0) % 24));
+    set('m', pad(((ms / 60000) | 0) % 60));
+    set('s', pad(((ms / 1000) | 0) % 60));
+    set('cs', '.' + pad(((ms % 1000) / 10) | 0));
+
+    // palette: only written when the rounded hue actually moves
+    var hue = Math.round(HUE_CALM + (HUE_HOT - HUE_CALM) * urgencyFor(ms));
+    if (hue !== lastHue) {
+      lastHue = hue;
+      root.style.setProperty('--accent-h', hue);
+    }
+
+    // grid scroll - transform only, so it stays on the compositor
+    if (!reduce) {
+      offset = (offset + (ms > 0 ? speedFor(ms) : 14) * dt) % TILE;
+      grid.style.transform =
+        'rotateX(' + TILT + 'deg) translate3d(0,' + offset.toFixed(2) + 'px,0)';
+    }
+
+    // beat: sharp hit on every whole second, decaying - same clock as the digits
+    if (!reduce && ms > 0) {
+      var beat = Math.pow(1 - (ms % 1000) / 1000, 4);
+      sunGlow.style.opacity = (0.32 + 0.5 * beat).toFixed(3);
+      horizon.style.opacity = (0.72 + 0.28 * beat).toFixed(3);
+      horizon.style.transform = 'scaleY(' + (1 + 2.4 * beat).toFixed(3) + ')';
+    }
+
+    if (ms === 0 && !done) {
+      done = true;
+      clock.classList.add('done');
+      document.title = "Time's up";
+      sunGlow.style.opacity = '0.32';
+      horizon.style.opacity = '0.72';
+      horizon.style.transform = 'scaleY(1)';
+    }
+
+    // keeps running past zero so the scene drifts on under TIME'S UP
+    requestAnimationFrame(frame);
+  }
+
+  frame();
+})();
+</script>
+</body>
+</html>
