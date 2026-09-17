@@ -5,4 +5,9 @@ services:
     container_name: final-countdown
     ports:
       - "8080:80"
+    environment:
+      # Set these in a .env file next to this one (see .env.example).
+      COUNTDOWN_TARGET: "${COUNTDOWN_TARGET:-}"
+      COUNTDOWN_TZ: "${COUNTDOWN_TZ:-}"
+      COUNTDOWN_LABEL: "${COUNTDOWN_LABEL:-}"
     restart: unless-stopped

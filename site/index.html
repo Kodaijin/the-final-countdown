@@ -360,23 +360,75 @@
     <p class="target" id="target">Oct 29, 2026 &middot; 6:00 PM PT</p>
   </div>
 
+<!-- Deadline config. Regenerated at container start from COUNTDOWN_* env vars. -->
+<script src="config.js"></script>
 <script>
 (function () {
-  // 6:00 PM Pacific on Oct 29, 2026 (PDT, UTC-7) as an absolute instant.
-  var TARGET = Date.parse('2026-10-30T01:00:00Z');
+  // Fallbacks used when config.js is missing and nothing is passed on the URL:
+  // 6:00 PM Pacific on Oct 29, 2026.
+  var DEFAULT_TARGET = '2026-10-29T18:00:00';
+  var DEFAULT_TZ = 'America/Los_Angeles';
 
-  // Optional override so the same image can serve another date: ?t=2027-01-01T00:00:00Z
-  var override = new URLSearchParams(location.search).get('t');
-  if (override) {
-    var parsed = Date.parse(override);
-    if (!isNaN(parsed)) {
-      TARGET = parsed;
-      document.getElementById('target').textContent =
-        new Date(parsed).toLocaleString(undefined, {
-          dateStyle: 'medium', timeStyle: 'short'
-        }) + ' (local)';
-    }
+  var cfg = window.COUNTDOWN || {};
+  var qs = new URLSearchParams(location.search);
+
+  // Precedence: URL query > config.js (env) > built-in default. A ?t= on the URL
+  // stands alone: it does not inherit the zone or caption baked into the image.
+  var urlTarget = qs.get('t');
+  var wanted = urlTarget || cfg.target || DEFAULT_TARGET;
+  var zone = qs.get('tz') || (urlTarget ? '' : cfg.tz || (cfg.target ? '' : DEFAULT_TZ));
+  var label = qs.get('label') || (urlTarget ? '' : cfg.label || '');
+
+  // Offset of `tz` from UTC, in ms, at the instant `utcMs`.
+  function offsetAt(utcMs, tz) {
+    var parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz, hour12: false,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    }).formatToParts(new Date(utcMs));
+    var p = {};
+    for (var i = 0; i < parts.length; i++) p[parts[i].type] = parts[i].value;
+    return Date.UTC(+p.year, +p.month - 1, +p.day,
+                    p.hour === '24' ? 0 : +p.hour, +p.minute, +p.second) - utcMs;
   }
+
+  // "2026-10-29T18:00" read as wall-clock time in `tz` -> absolute instant.
+  function parseInZone(str, tz) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?$/.exec(str.trim());
+    if (!m) return NaN;
+    var naive = Date.UTC(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0));
+    var guess = naive - offsetAt(naive, tz);
+    return naive - offsetAt(guess, tz); // second pass settles DST edges
+  }
+
+  var hasOffset = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(String(wanted).trim());
+  var TARGET = NaN;
+  if (zone && !hasOffset) {
+    try { TARGET = parseInZone(String(wanted), zone); }
+    catch (e) { TARGET = NaN; } // unknown timezone id
+  }
+  if (isNaN(TARGET)) {
+    TARGET = Date.parse(wanted);
+    if (!hasOffset) zone = ''; // parsed as the viewer's local time
+  }
+  if (isNaN(TARGET)) {
+    TARGET = parseInZone(DEFAULT_TARGET, DEFAULT_TZ);
+    zone = DEFAULT_TZ;
+    label = '';
+  }
+
+  if (!label) {
+    // Spelled out component by component: dateStyle/timeStyle cannot be combined
+    // with timeZoneName, and the zone abbreviation is the point of the caption.
+    var fmt = {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: 'numeric', minute: '2-digit'
+    };
+    if (zone) { fmt.timeZone = zone; fmt.timeZoneName = 'short'; }
+    try { label = new Date(TARGET).toLocaleString(undefined, fmt); }
+    catch (e) { label = new Date(TARGET).toLocaleString(); }
+  }
+  document.getElementById('target').textContent = label;
 
   var root = document.documentElement;
   var clock = document.getElementById('clock');

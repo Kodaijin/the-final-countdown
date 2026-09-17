@@ -9,3 +9,6 @@ Desktop.ini
 # scratch
 *.tmp
 *.log
+
+# local config
+.env

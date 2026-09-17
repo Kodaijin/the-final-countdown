@@ -6,6 +6,9 @@ HTML file served by nginx in a container.
 
 ```
 site/index.html      the entire app - markup, CSS and JS in one file
+site/config.js       deadline settings; regenerated in the container from env vars
+docker/              entrypoint script that writes config.js at container start
+.env.example         template for the COUNTDOWN_* variables compose reads
 Dockerfile           nginx:alpine, copies site/ into the image
 docker-compose.yml   one service, port 8080:80
 ```
@@ -32,21 +35,51 @@ To serve on the standard web port instead, change the mapping to `80:80` in
 
 ## Changing the deadline
 
-The target is stored as an absolute UTC instant, so everyone counts down to the same
-moment no matter what timezone they're in. Edit this line near the top of the script in
-`site/index.html` and rebuild:
+Copy `.env.example` to `.env`, edit it, and bring the stack back up:
 
-```js
-var TARGET = Date.parse('2026-10-30T01:00:00Z'); // = 6:00 PM Pacific (PDT), Oct 29 2026
+```sh
+cp .env.example .env
+docker compose up -d --build
 ```
 
-Note that Oct 29 is still daylight time (UTC-7); after Nov 1 Pacific is UTC-8.
+```sh
+COUNTDOWN_TARGET=2026-10-29T18:00:00   # when it ends
+COUNTDOWN_TZ=America/Los_Angeles       # the zone that time is written in
+COUNTDOWN_LABEL=                       # caption under the clock; blank = generated
+```
 
-For a one-off without rebuilding, pass a target on the URL:
+`COUNTDOWN_TARGET` is read as wall-clock time in `COUNTDOWN_TZ`, so you write the time you
+mean and daylight saving is worked out for you — the same `18:00` is UTC-7 on Oct 29 and
+UTC-8 two weeks later. Leave `COUNTDOWN_TZ` blank to have the time read in each viewer's
+own timezone instead. You can also give an absolute instant (`2026-10-30T01:00:00Z` or
+`2026-10-29T18:00:00-07:00`), in which case the zone only affects how the caption reads.
+Whatever the input, everyone counts down to the same moment.
+
+After an `.env` edit a plain `docker compose up -d` is enough — no rebuild. `config.js` is
+written at container start by `docker/30-countdown-config.sh`.
+
+Without compose, pass the same variables on the command line:
+
+```sh
+docker run -d -p 8080:80 --name final-countdown \
+  -e COUNTDOWN_TARGET=2027-01-01T00:00:00 \
+  -e COUNTDOWN_TZ=Europe/Berlin \
+  final-countdown
+```
+
+Serving `site/` directly with no container? Edit `site/config.js`, which holds the same
+three settings and ships with the defaults.
+
+### Per-visit overrides on the URL
 
 ```
-http://localhost:8080/?t=2027-01-01T00:00:00Z
+http://localhost:8080/?t=2026-12-25T00:00:00&tz=America/New_York
+http://localhost:8080/?t=2027-01-01T00:00:00Z&label=Liftoff
 ```
+
+`?t=` wins over the environment and stands alone: it does not inherit `COUNTDOWN_TZ` or
+`COUNTDOWN_LABEL`, so add `?tz=` and `?label=` if you want them. A target that fails to
+parse falls back to the built-in default rather than showing a broken clock.
 
 ## Notes
 
