@@ -6,8 +6,8 @@ nginx in a container.
 
 ```
 site/index.html      the entire app - markup, CSS and JS in one file
-site/config.js       deadline settings; regenerated in the container from env vars
-docker/              nginx config and the entrypoint that writes config.js at start
+site/config.js       deadline settings for serving site/ without Docker
+docker/              nginx config and the entrypoint that inlines the deadline
 .env.example         template for the COUNTDOWN_* variables compose reads
 Dockerfile           nginx:alpine, copies site/ into the image
 docker-compose.yml   one service, port 8080:80
@@ -61,8 +61,9 @@ own timezone instead. You can also give an absolute instant (`2026-10-30T01:00:0
 `2026-10-29T18:00:00-07:00`), in which case the zone only affects how the caption reads.
 Whatever the input, everyone counts down to the same moment.
 
-`config.js` is written at container start by `docker/30-countdown-config.sh`, so an `.env`
-edit needs a restart rather than a new image — but pass `--build` regardless. Compose only
+The deadline is written into the page at container start by
+`docker/30-countdown-config.sh`, so an `.env` edit needs a restart rather than a new image
+— but pass `--build` regardless. Compose only
 builds when the tagged image is *missing*, so a plain `docker compose up -d`
 keeps serving whatever `final-countdown` image is already on the machine — after a `git
 pull` that is the old app, silently, with none of your changes in it. `--build` is nearly
@@ -71,6 +72,27 @@ container matches the checkout.
 
 Serving `site/` directly with no container? Fill in `site/config.js` by hand; it holds the
 same three settings and ships blank.
+
+### Behind Cloudflare or any other CDN
+
+The entrypoint writes the deadline *into* `index.html` rather than leaving it in a file the
+page fetches. That matters in front of a cache: Cloudflare caches `.js` by default and does
+not cache HTML, so a separate `config.js` can be served from the edge long after the origin
+changed — a fresh page reading a months-old deadline. Inlined, there is one document to get
+right, and the inline block also overrides `config.js` if a stale copy does arrive.
+
+nginx sends `Cache-Control: no-store` for the page and `config.js`, which is enough to keep
+Cloudflare from caching either going forward. A copy cached *before* that header existed
+stays until evicted, so purge the cache once after deploying this
+(Cloudflare dashboard → Caching → Configuration → Purge Everything).
+
+To tell an edge-cached response from an origin one, compare them directly on the server:
+
+```sh
+curl -s http://localhost:8080/ | grep "target: '"      # what the origin serves
+curl -s https://your-domain/ | grep "target: '"        # what the world sees
+curl -sI https://your-domain/ | grep -i "cf-cache-status\|cache-control\|age"
+```
 
 ### Nothing is hardcoded, and nothing is guessed
 
@@ -81,7 +103,8 @@ at whichever layer notices first:
 | --- | --- |
 | `COUNTDOWN_TARGET` empty or unset | `docker compose up` fails immediately and names the variable |
 | Same, via `docker run` without `-e` | The container exits 1; `docker logs` shows how to fix it |
-| `config.js` blank, missing, or stale | The page replaces the digits with **NO DEADLINE SET** and the fix |
+| Config missing entirely (no Docker, blank `config.js`) | The page replaces the digits with **NO DEADLINE SET** and the fix |
+| A stale `config.js` from a CDN edge | Ignored - the deadline inlined in the page wins |
 | Target that does not parse | The page shows the value it could not read and the expected format |
 | `COUNTDOWN_TZ` not an IANA zone | The page names the bad zone |
 

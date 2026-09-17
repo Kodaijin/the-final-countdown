@@ -400,8 +400,10 @@
     <p class="target" id="target"></p>
   </div>
 
-<!-- Deadline config. Regenerated at container start from COUNTDOWN_* env vars. -->
+<!-- Deadline config, for serving site/ without Docker. In the container the entrypoint
+     inlines the settings below instead, so no separately cacheable file can go stale. -->
 <script src="config.js"></script>
+<!--COUNTDOWN_CONFIG-->
 <script>
 (function () {
   // There is no built-in deadline. It comes from COUNTDOWN_TARGET in .env (via the

@@ -1,9 +1,10 @@
 #!/bin/sh
-# Writes site config from environment variables before nginx starts.
+# Renders the deadline into the served page before nginx starts.
 # nginx:alpine runs everything in /docker-entrypoint.d/ at container start.
 set -eu
 
-out=/usr/share/nginx/html/config.js
+root=/usr/share/nginx/html
+template=/usr/share/nginx/template/index.html
 
 : "${COUNTDOWN_TARGET:=}"
 : "${COUNTDOWN_TZ:=}"
@@ -31,13 +32,45 @@ for v in "$COUNTDOWN_TARGET" "$COUNTDOWN_TZ" "$COUNTDOWN_LABEL"; do
   esac
 done
 
-cat > "$out" <<JS
+started=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+
+block=$(mktemp)
+cat > "$block" <<JS
+<script>
+  /* Written into the page at container start ($started). This wins over
+     config.js, so a cached or stale config.js cannot change the deadline. */
+  window.COUNTDOWN = {
+    target: '${COUNTDOWN_TARGET}',
+    tz: '${COUNTDOWN_TZ}',
+    label: '${COUNTDOWN_LABEL}',
+    generatedAt: '${started}'
+  };
+</script>
+JS
+
+# Always render from the pristine template, so restarts stay idempotent.
+# `r` then `d` substitutes the file at the placeholder with no escaping worries:
+# the values can contain slashes (timezones do) and ampersands safely.
+sed -e "/<!--COUNTDOWN_CONFIG-->/r $block" \
+    -e "/<!--COUNTDOWN_CONFIG-->/d" \
+    "$template" > "$root/index.html"
+rm -f "$block"
+
+if ! grep -q "window.COUNTDOWN" "$root/index.html"; then
+  echo "$0: failed to inline the deadline into index.html" >&2
+  exit 1
+fi
+
+# Kept in step for anyone loading site/config.js directly; the page ignores it
+# whenever the inlined block above is present.
+cat > "$root/config.js" <<JS
 // Generated at container start from COUNTDOWN_* environment variables.
 window.COUNTDOWN = {
   target: '${COUNTDOWN_TARGET}',
   tz: '${COUNTDOWN_TZ}',
-  label: '${COUNTDOWN_LABEL}'
+  label: '${COUNTDOWN_LABEL}',
+  generatedAt: '${started}'
 };
 JS
 
-echo "$0: deadline set to '${COUNTDOWN_TARGET}' ${COUNTDOWN_TZ:+(${COUNTDOWN_TZ})}"
+echo "$0: deadline set to '${COUNTDOWN_TARGET}' ${COUNTDOWN_TZ:+(${COUNTDOWN_TZ})} at $started"
