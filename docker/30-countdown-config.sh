@@ -9,10 +9,19 @@ out=/usr/share/nginx/html/config.js
 : "${COUNTDOWN_TZ:=}"
 : "${COUNTDOWN_LABEL:=}"
 
-# Nothing configured: keep the defaults baked into the image.
-if [ -z "$COUNTDOWN_TARGET" ] && [ -z "$COUNTDOWN_TZ" ] && [ -z "$COUNTDOWN_LABEL" ]; then
-  echo "$0: no COUNTDOWN_* variables set, keeping built-in deadline"
-  exit 0
+# The deadline is required. Refusing to start is deliberate: a container that
+# came up serving some fallback date would look like a working deploy.
+if [ -z "$COUNTDOWN_TARGET" ]; then
+  echo "" >&2
+  echo "  COUNTDOWN_TARGET is not set - refusing to start." >&2
+  echo "" >&2
+  echo "  Set it in .env next to docker-compose.yml, for example:" >&2
+  echo "      COUNTDOWN_TARGET=2026-10-29T18:00:00" >&2
+  echo "      COUNTDOWN_TZ=America/Los_Angeles" >&2
+  echo "" >&2
+  echo "  Start from .env.example, then: docker compose up -d --build" >&2
+  echo "" >&2
+  exit 1
 fi
 
 # Single quotes would break out of the JS string literals below.

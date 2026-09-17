@@ -1,8 +1,8 @@
 # The Final Countdown
 
-A single-page countdown to **Oct 29, 2026 at 6:00 PM Pacific**, showing days, hours,
-minutes, seconds and hundredths of a second. No dependencies, no build step — one static
-HTML file served by nginx in a container.
+A single-page countdown to a deadline you set, showing days, hours, minutes, seconds and
+hundredths of a second. No dependencies, no build step — one static HTML file served by
+nginx in a container.
 
 ```
 site/index.html      the entire app - markup, CSS and JS in one file
@@ -15,17 +15,24 @@ docker-compose.yml   one service, port 8080:80
 
 ## Run it
 
+There is no built-in deadline — set one first, or nothing will start:
+
 ```sh
+cp .env.example .env
+$EDITOR .env          # set COUNTDOWN_TARGET
 docker compose up -d --build
 ```
 
 Then open <http://localhost:8080>.
 
-Without compose:
+Without compose, pass the deadline on the command line:
 
 ```sh
 docker build -t final-countdown .
-docker run -d -p 8080:80 --name final-countdown final-countdown
+docker run -d -p 8080:80 --name final-countdown \
+  -e COUNTDOWN_TARGET=2026-10-29T18:00:00 \
+  -e COUNTDOWN_TZ=America/Los_Angeles \
+  final-countdown
 ```
 
 Stop it with `docker compose down` (or `docker rm -f final-countdown`).
@@ -35,15 +42,14 @@ To serve on the standard web port instead, change the mapping to `80:80` in
 
 ## Changing the deadline
 
-Copy `.env.example` to `.env`, edit it, and bring the stack back up:
+`COUNTDOWN_TARGET` in `.env` is the single source of truth. Edit it and rebuild:
 
 ```sh
-cp .env.example .env
 docker compose up -d --build
 ```
 
 ```sh
-COUNTDOWN_TARGET=2026-10-29T18:00:00   # when it ends
+COUNTDOWN_TARGET=2026-10-29T18:00:00   # required - when it ends
 COUNTDOWN_TZ=America/Los_Angeles       # the zone that time is written in
 COUNTDOWN_LABEL=                       # caption under the clock; blank = generated
 ```
@@ -56,29 +62,32 @@ own timezone instead. You can also give an absolute instant (`2026-10-30T01:00:0
 Whatever the input, everyone counts down to the same moment.
 
 `config.js` is written at container start by `docker/30-countdown-config.sh`, so an `.env`
-edit needs a restart rather than a new image. Always pass `--build` anyway:
-
-```sh
-docker compose up -d --build
-```
-
-Compose only builds when the tagged image is *missing*, so a plain `docker compose up -d`
+edit needs a restart rather than a new image — but pass `--build` regardless. Compose only
+builds when the tagged image is *missing*, so a plain `docker compose up -d`
 keeps serving whatever `final-countdown` image is already on the machine — after a `git
 pull` that is the old app, silently, with none of your changes in it. `--build` is nearly
 free when nothing changed (every layer is cached) and is the only way to be sure the
 container matches the checkout.
 
-Without compose, pass the same variables on the command line:
+Serving `site/` directly with no container? Fill in `site/config.js` by hand; it holds the
+same three settings and ships blank.
 
-```sh
-docker run -d -p 8080:80 --name final-countdown \
-  -e COUNTDOWN_TARGET=2027-01-01T00:00:00 \
-  -e COUNTDOWN_TZ=Europe/Berlin \
-  final-countdown
-```
+### Nothing is hardcoded, and nothing is guessed
 
-Serving `site/` directly with no container? Edit `site/config.js`, which holds the same
-three settings and ships with the defaults.
+There is no fallback date anywhere. If the deadline is missing or unreadable you get told,
+at whichever layer notices first:
+
+| What is wrong | What happens |
+| --- | --- |
+| `COUNTDOWN_TARGET` empty or unset | `docker compose up` fails immediately and names the variable |
+| Same, via `docker run` without `-e` | The container exits 1; `docker logs` shows how to fix it |
+| `config.js` blank, missing, or stale | The page replaces the digits with **NO DEADLINE SET** and the fix |
+| Target that does not parse | The page shows the value it could not read and the expected format |
+| `COUNTDOWN_TZ` not an IANA zone | The page names the bad zone |
+
+One consequence of the compose-level check: while `COUNTDOWN_TARGET` is unset, *every*
+`docker compose` subcommand refuses to run, `down` and `ps` included. Set the variable, or
+use `docker rm -f final-countdown` to tear down.
 
 ### Per-visit overrides on the URL
 
@@ -88,8 +97,7 @@ http://localhost:8080/?t=2027-01-01T00:00:00Z&label=Liftoff
 ```
 
 `?t=` wins over the environment and stands alone: it does not inherit `COUNTDOWN_TZ` or
-`COUNTDOWN_LABEL`, so add `?tz=` and `?label=` if you want them. A target that fails to
-parse falls back to the built-in default rather than showing a broken clock.
+`COUNTDOWN_LABEL`, so add `?tz=` and `?label=` if you want them.
 
 ## Notes
 

@@ -7,7 +7,7 @@ services:
       - "8080:80"
     environment:
       # Set these in a .env file next to this one (see .env.example).
-      COUNTDOWN_TARGET: "${COUNTDOWN_TARGET:-}"
+      COUNTDOWN_TARGET: "${COUNTDOWN_TARGET:?is not set - copy .env.example to .env and set the deadline, e.g. COUNTDOWN_TARGET=2026-10-29T18:00:00}"
       COUNTDOWN_TZ: "${COUNTDOWN_TZ:-}"
       COUNTDOWN_LABEL: "${COUNTDOWN_LABEL:-}"
     restart: unless-stopped

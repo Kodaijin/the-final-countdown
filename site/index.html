@@ -305,6 +305,46 @@
       0 0 70px var(--glow);
   }
 
+  /* No deadline configured: the digits would be meaningless, so say so instead. */
+  .unset .val,
+  .unset .sep,
+  .unset .lbl { display: none; }
+
+  .unset::before {
+    content: "NO DEADLINE SET";
+    font-size: clamp(1.7rem, 7vw, 5rem);
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #fff;
+    text-shadow:
+      0 0 10px rgba(0, 0, 0, 0.85),
+      0 0 26px var(--glow),
+      0 0 70px var(--glow);
+  }
+
+  .target.error {
+    color: #ffd9f2;
+    letter-spacing: 0.12em;
+    text-indent: 0.12em;
+    text-transform: none;
+    font-size: clamp(0.75rem, 1.5vw, 0.95rem);
+    line-height: 1.7;
+    max-width: 62ch;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .target.error code {
+    font-family: inherit;
+    color: #fff;
+    background: rgba(255, 79, 216, 0.14);
+    border: 1px solid rgba(255, 79, 216, 0.35);
+    border-radius: 4px;
+    padding: 0.1em 0.4em;
+    white-space: nowrap;
+  }
+
   @keyframes twinkle {
     0%, 100% { opacity: 0.55; }
     50%      { opacity: 1; }
@@ -357,27 +397,42 @@
       </div>
     </div>
 
-    <p class="target" id="target">Oct 29, 2026 &middot; 6:00 PM PT</p>
+    <p class="target" id="target"></p>
   </div>
 
 <!-- Deadline config. Regenerated at container start from COUNTDOWN_* env vars. -->
 <script src="config.js"></script>
 <script>
 (function () {
-  // Fallbacks used when config.js is missing and nothing is passed on the URL:
-  // 6:00 PM Pacific on Oct 29, 2026.
-  var DEFAULT_TARGET = '2026-10-29T18:00:00';
-  var DEFAULT_TZ = 'America/Los_Angeles';
-
+  // There is no built-in deadline. It comes from COUNTDOWN_TARGET in .env (via the
+  // generated config.js) or from ?t= on the URL; with neither, the page says so
+  // rather than counting down to a date nobody asked for.
   var cfg = window.COUNTDOWN || {};
   var qs = new URLSearchParams(location.search);
 
-  // Precedence: URL query > config.js (env) > built-in default. A ?t= on the URL
-  // stands alone: it does not inherit the zone or caption baked into the image.
+  // A ?t= on the URL stands alone: it does not inherit the zone or caption from .env.
   var urlTarget = qs.get('t');
-  var wanted = urlTarget || cfg.target || DEFAULT_TARGET;
-  var zone = qs.get('tz') || (urlTarget ? '' : cfg.tz || (cfg.target ? '' : DEFAULT_TZ));
+  var wanted = urlTarget || cfg.target || '';
+  var zone = qs.get('tz') || (urlTarget ? '' : cfg.tz || '');
   var label = qs.get('label') || (urlTarget ? '' : cfg.label || '');
+
+  var clockEl = document.getElementById('clock');
+  var targetEl = document.getElementById('target');
+
+  // Replaces the digits with an explanation and stops. Nothing is cached or
+  // guessed here, so whatever the viewer sees is the actual configured state.
+  function unconfigured(html) {
+    clockEl.classList.add('unset');
+    targetEl.className = 'target error';
+    targetEl.innerHTML = html;
+    document.title = 'No deadline set';
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
 
   // Offset of `tz` from UTC, in ms, at the instant `utcMs`.
   function offsetAt(utcMs, tz) {
@@ -401,20 +456,40 @@
     return naive - offsetAt(guess, tz); // second pass settles DST edges
   }
 
+  if (!wanted) {
+    unconfigured(
+      'No deadline set. Put <code>COUNTDOWN_TARGET</code> in <code>.env</code> ' +
+      '(start from <code>.env.example</code>), then run ' +
+      '<code>docker compose up -d --build</code>.'
+    );
+    return;
+  }
+
+  if (zone) {
+    try { new Intl.DateTimeFormat('en-US', { timeZone: zone }); }
+    catch (e) {
+      unconfigured(
+        'COUNTDOWN_TZ is not a timezone: <code>' + esc(zone) + '</code>. ' +
+        'Use an IANA name such as <code>America/Los_Angeles</code>, or leave it blank.'
+      );
+      return;
+    }
+  }
+
   var hasOffset = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(String(wanted).trim());
-  var TARGET = NaN;
-  if (zone && !hasOffset) {
-    try { TARGET = parseInZone(String(wanted), zone); }
-    catch (e) { TARGET = NaN; } // unknown timezone id
-  }
+  // With an explicit offset the string is already absolute; with a zone it is
+  // wall-clock time there; with neither it is the viewer's own local time.
+  var TARGET = (!hasOffset && zone)
+    ? parseInZone(String(wanted), zone)
+    : Date.parse(wanted);
+
   if (isNaN(TARGET)) {
-    TARGET = Date.parse(wanted);
-    if (!hasOffset) zone = ''; // parsed as the viewer's local time
-  }
-  if (isNaN(TARGET)) {
-    TARGET = parseInZone(DEFAULT_TARGET, DEFAULT_TZ);
-    zone = DEFAULT_TZ;
-    label = '';
+    unconfigured(
+      'Could not read the deadline <code>' + esc(wanted) + '</code>. Expected ' +
+      '<code>YYYY-MM-DDTHH:MM</code>' + (zone ? ' in ' + esc(zone) : '') +
+      ', or an absolute instant like <code>2026-10-30T01:00:00Z</code>.'
+    );
+    return;
   }
 
   if (!label) {
@@ -428,7 +503,7 @@
     try { label = new Date(TARGET).toLocaleString(undefined, fmt); }
     catch (e) { label = new Date(TARGET).toLocaleString(); }
   }
-  document.getElementById('target').textContent = label;
+  targetEl.textContent = label;
 
   var root = document.documentElement;
   var clock = document.getElementById('clock');
