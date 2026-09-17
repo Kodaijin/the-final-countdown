@@ -7,7 +7,7 @@ HTML file served by nginx in a container.
 ```
 site/index.html      the entire app - markup, CSS and JS in one file
 site/config.js       deadline settings; regenerated in the container from env vars
-docker/              entrypoint script that writes config.js at container start
+docker/              nginx config and the entrypoint that writes config.js at start
 .env.example         template for the COUNTDOWN_* variables compose reads
 Dockerfile           nginx:alpine, copies site/ into the image
 docker-compose.yml   one service, port 8080:80
@@ -55,8 +55,18 @@ own timezone instead. You can also give an absolute instant (`2026-10-30T01:00:0
 `2026-10-29T18:00:00-07:00`), in which case the zone only affects how the caption reads.
 Whatever the input, everyone counts down to the same moment.
 
-After an `.env` edit a plain `docker compose up -d` is enough — no rebuild. `config.js` is
-written at container start by `docker/30-countdown-config.sh`.
+`config.js` is written at container start by `docker/30-countdown-config.sh`, so an `.env`
+edit needs a restart rather than a new image. Always pass `--build` anyway:
+
+```sh
+docker compose up -d --build
+```
+
+Compose only builds when the tagged image is *missing*, so a plain `docker compose up -d`
+keeps serving whatever `final-countdown` image is already on the machine — after a `git
+pull` that is the old app, silently, with none of your changes in it. `--build` is nearly
+free when nothing changed (every layer is cached) and is the only way to be sure the
+container matches the checkout.
 
 Without compose, pass the same variables on the command line:
 
