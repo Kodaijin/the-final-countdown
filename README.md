@@ -55,8 +55,8 @@ docker compose up -d --build
 COUNTDOWN_TARGET=2026-10-29T18:00:00   # required - when it ends
 COUNTDOWN_TZ=America/Los_Angeles       # the zone that time is written in
 COUNTDOWN_LABEL=                       # caption under the clock; blank = generated
-COUNTDOWN_FLIGHT=                      # flight to track after zero, e.g. UA 1 (optional)
-COUNTDOWN_ROUTE=                       # its route, e.g. SFO-ICN (optional, recommended)
+COUNTDOWN_FLIGHT=                      # flight(s) to track after zero, e.g. AS 414, AS 488
+COUNTDOWN_ROUTE=                       # their route, e.g. PIT-SEA-PDX (optional, recommended)
 ```
 
 `COUNTDOWN_TARGET` is read as wall-clock time in `COUNTDOWN_TZ`, so you write the time you
@@ -149,6 +149,19 @@ COUNTDOWN_FLIGHT=UA 1        # flight number, ADS-B callsign (UAL1) or tail numb
 COUNTDOWN_ROUTE=SFO-SIN      # two IATA airport codes; optional but recommended
 ```
 
+For a connection, list the flights in order and give the route one airport per stop:
+
+```sh
+COUNTDOWN_FLIGHT=AS 414, AS 488
+COUNTDOWN_ROUTE=PIT-SEA-PDX  # or "PIT-SEA, SEA-PDX"
+```
+
+The tracker follows the first flight until it lands, shows *Layover* with what is next,
+then picks up the second as soon as its transponder comes on. An itinerary strip shows
+every leg (flown, in progress, still to come) and lets viewers click back to one; the map
+draws the whole trip. A page opened mid-trip catches up on its own: the next leg is
+checked every 15 seconds or so, and once it is airborne the earlier one counts as flown.
+
 The tracker shows the plane on a map with its route and trail, plus altitude and climb
 rate, ground speed, heading, distance to go, a progress bar and an estimated arrival time
 (in `COUNTDOWN_TZ`), the aircraft type and registration, and a status: *Waiting for
@@ -185,6 +198,9 @@ Serving `site/` without Docker gives you the countdown but no relay; the tracker
   keeps estimating distance and arrival from the last report until it reappears.
 - *Arrival is an estimate*: great-circle distance at the current ground speed. It runs long
   during climb-out and settles down at cruise.
+- *Tight connections.* Leg two is only recognised once its own transponder is on, so for
+  the first minutes of a layover the page shows *Layover* rather than the next plane at
+  the gate. That is normal.
 - *Daily flight numbers.* A long-haul callsign can be on two planes at once (yesterday's
   still landing as today's leaves). The tracker prefers the one nearest the origin and then
   stays locked to that airframe.

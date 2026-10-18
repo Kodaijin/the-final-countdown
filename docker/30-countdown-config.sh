@@ -34,13 +34,14 @@ for v in "$COUNTDOWN_TARGET" "$COUNTDOWN_TZ" "$COUNTDOWN_LABEL" "$COUNTDOWN_FLIG
   esac
 done
 
-# A flight number or tail number is letters, digits, spaces and dashes - anything
-# else is a typo the tracker would only fail on hours later, at zero.
+# Flight and tail numbers are letters, digits, spaces and dashes, with commas
+# between the flights of a connection - anything else is a typo the tracker
+# would only fail on hours later, at zero.
 case "$COUNTDOWN_FLIGHT" in
-  *[!A-Za-z0-9\ -]*) echo "$0: COUNTDOWN_FLIGHT '$COUNTDOWN_FLIGHT' is not a flight or tail number (e.g. UA 1, UAL1, N81110)" >&2; exit 1 ;;
+  *[!A-Za-z0-9\ ,-]*) echo "$0: COUNTDOWN_FLIGHT '$COUNTDOWN_FLIGHT' is not a flight or tail number (e.g. UA 1, UAL1, N81110, or AS 414, AS 488)" >&2; exit 1 ;;
 esac
 case "$COUNTDOWN_ROUTE" in
-  *[!A-Za-z\ \>-]*) echo "$0: COUNTDOWN_ROUTE '$COUNTDOWN_ROUTE' should be two airport codes, e.g. SFO-ICN" >&2; exit 1 ;;
+  *[!A-Za-z\ ,\>-]*) echo "$0: COUNTDOWN_ROUTE '$COUNTDOWN_ROUTE' should be airport codes, e.g. SFO-ICN or PIT-SEA-PDX" >&2; exit 1 ;;
 esac
 
 started=$(date -u '+%Y-%m-%dT%H:%M:%SZ')

@@ -7,6 +7,6 @@ window.COUNTDOWN = {
   target: '',   // e.g. '2026-10-29T18:00:00', or an absolute '2026-10-30T01:00:00Z'
   tz: '',       // e.g. 'America/Los_Angeles'; blank means the viewer's own timezone
   label: '',    // caption under the clock; blank = generated from the target
-  flight: '',   // tracked live after zero, e.g. 'UA 1' or 'N81110' (needs the Docker relay)
-  route: ''     // optional, e.g. 'SFO-ICN'; blank = looked up from the flight number
+  flight: '',   // tracked live after zero, e.g. 'UA 1', or 'AS 414, AS 488' (needs the Docker relay)
+  route: ''     // optional, e.g. 'SFO-ICN' or 'PIT-SEA-PDX'; blank = looked up from the flight numbers
 };

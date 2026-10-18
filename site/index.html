@@ -441,6 +441,58 @@
   .route-doubt .fl-ap,
   .route-doubt .leaflet-tooltip.fl-ap-tip { opacity: 0.25; }
 
+  /* itinerary strip, for a trip of more than one flight */
+  .fl-legs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .fl-legs[hidden] { display: none; }
+
+  .fl-leg {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+    padding: 0.35em 0.9em 0.35em 0.35em;
+    font: inherit;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    color: #bccbdb;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .fl-leg:hover { border-color: rgba(255, 255, 255, 0.3); }
+  .fl-leg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .fl-leg small { font-size: 0.95em; letter-spacing: 0.08em; color: #7f8fa3; }
+
+  .fl-leg-n {
+    display: inline-grid;
+    place-items: center;
+    width: 1.9em;
+    height: 1.9em;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    font-weight: 700;
+  }
+  .fl-leg.is-now .fl-leg-n { color: var(--accent); }
+  .fl-leg.is-done .fl-leg-n { color: #7dffb2; background: rgba(125, 255, 178, 0.1); }
+  .fl-leg.is-viewed {
+    color: #fff;
+    border-color: hsl(var(--accent-h) 100% 62% / 0.6);
+    background: hsl(var(--accent-h) 100% 62% / 0.12);
+    box-shadow: 0 0 14px hsl(var(--accent-h) 100% 62% / 0.25);
+  }
+
+  .fl-leg-sep {
+    width: 18px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
   .fl-progress {
     position: relative;
     height: 4px;
@@ -591,13 +643,16 @@
   .fl-map .leaflet-bar a:hover { background: #1a1834; }
 
   .fl-route-line {
-    stroke: hsl(var(--accent-h) 100% 62% / 0.5);
+    stroke: hsl(var(--accent-h) 100% 62% / 0.25);
     stroke-dasharray: 4 8;
   }
+  .fl-route-line.is-viewed { stroke: hsl(var(--accent-h) 100% 62% / 0.6); }
+  .fl-route-line.is-done { stroke: rgba(125, 255, 178, 0.3); stroke-dasharray: none; }
   .fl-trail-line {
     stroke: var(--accent);
     filter: drop-shadow(0 0 4px var(--glow));
   }
+  .fl-trail-line.is-dim { stroke: rgba(125, 255, 178, 0.55); filter: none; }
   .fl-ap { stroke: #fff; fill: var(--accent); }
 
   .fl-map .leaflet-tooltip.fl-ap-tip {
@@ -703,6 +758,7 @@
         </div>
         <div class="fl-route" id="flRoute"></div>
       </div>
+      <nav class="fl-legs" id="flLegs" aria-label="Flights in this trip" hidden></nav>
       <div class="fl-progress" id="flProgress" hidden><i id="flBar"></i></div>
       <p class="fl-note" id="flNote" hidden></p>
 
@@ -853,45 +909,91 @@ window.FlightTracker = (function () {
 
   // ---- state ----
 
-  var ident, zone, el = {};
-  var route = null, routeFor = null, routeState = 'pending'; // pending | ok | none
-  var routeErr = '';       // why a hand-set route could not be used
-  var fix = null;          // latest position: lat, lon, t, ground, alt, gs, track, vr
-  var ac = null;           // latest raw aircraft record from the feed
-  var hex = null;          // aircraft we are locked onto
-  var lastNow = 0;         // feed timestamp of the last response we used
-  var airborneSeen = false;
-  var trail = [];          // [lat, lon, t]
+  // One entry per flight. A connection is followed leg by leg: `cur` is the leg
+  // in progress and `view` the one on screen - the same unless the viewer has
+  // picked another leg in the itinerary strip.
+  var legs = [], cur = 0, view = 0, follow = true, tick = 0;
+  var zone, el = {}, routeErr = '';
   var feed = '', feedErr = 0, inflight = false, timer = null, lastPoll = 0, skew = 0;
-  var L, map, layers = {}, userMoved = false;
+  var L, map, layers = { routes: [], trails: [] }, userMoved = false;
 
-  function storeKey() { return 'fc-flight:' + ident.kind + ':' + ident.id; }
+  function newLeg(ident) {
+    return {
+      ident: ident,
+      route: null, routeFor: null, routeState: 'pending', // pending | ok | none
+      fix: null,          // latest position: lat, lon, t, ground, alt, gs, track, vr
+      ac: null,           // latest raw aircraft record from the feed
+      hex: null,          // aircraft this leg is locked onto
+      lastNow: 0,         // feed timestamp of the last response used
+      airborneSeen: false,
+      trail: [],          // [lat, lon, t]
+      done: false
+    };
+  }
 
-  function save() {
+  // "AS 414, AS 488" -> two legs; null if any of them is not a flight.
+  function parseTrip(raw) {
+    var parts = String(raw || '').split(',').map(function (s) { return s.trim(); })
+                                 .filter(Boolean);
+    if (!parts.length || parts.length > 4) return null;
+    var ids = parts.map(parseIdent);
+    return ids.every(Boolean) ? ids : null;
+  }
+
+  function legKey(g) { return 'fc-flight:' + g.ident.kind + ':' + g.ident.id; }
+  function tripKey() { return 'fc-trip:' + legs.map(function (g) { return g.ident.id; }).join(','); }
+
+  function save(g) {
     try {
-      localStorage.setItem(storeKey(), JSON.stringify({
-        hex: hex, fix: fix, airborneSeen: airborneSeen, trail: trail
+      localStorage.setItem(legKey(g), JSON.stringify({
+        hex: g.hex, fix: g.fix, airborneSeen: g.airborneSeen, trail: g.trail
       }));
+      if (legs.length > 1) localStorage.setItem(tripKey(), JSON.stringify({ cur: cur, t: Date.now() }));
     } catch (e) {}
   }
 
   function restore() {
     try {
-      var s = JSON.parse(localStorage.getItem(storeKey()) || 'null');
-      if (!s || !s.fix || Date.now() - s.fix.t > KEEP_MS) return;
-      hex = s.hex; fix = s.fix; airborneSeen = !!s.airborneSeen;
-      trail = (s.trail || []).filter(function (p) { return Date.now() - p[2] < KEEP_MS; });
+      legs.forEach(function (g) {
+        var s = JSON.parse(localStorage.getItem(legKey(g)) || 'null');
+        if (!s || !s.fix || Date.now() - s.fix.t > KEEP_MS) return;
+        g.hex = s.hex; g.fix = s.fix; g.airborneSeen = !!s.airborneSeen;
+        g.trail = (s.trail || []).filter(function (p) { return Date.now() - p[2] < KEEP_MS; });
+      });
+      var t = JSON.parse(localStorage.getItem(tripKey()) || 'null');
+      if (t && Date.now() - t.t < KEEP_MS) cur = view = Math.min(t.cur | 0, legs.length - 1);
+      for (var i = 0; i < cur; i++) legs[i].done = true;
     } catch (e) {}
   }
 
   // ---- data ----
 
-  function poll() {
+  // The leg on screen is polled every cycle. Every third cycle, a few seconds
+  // later (adsb.fi allows one request a second), the active leg's successor is
+  // polled too, so a page opened mid-trip - or a first leg that landed out of
+  // coverage - still moves on once the next flight is in the air.
+  function cycle() {
     if (inflight) return;
     inflight = true;
     clearTimeout(timer);
     lastPoll = Date.now();
-    fetch('api/aircraft/' + ident.kind + '/' + encodeURIComponent(ident.id), { cache: 'no-store' })
+    fetchLeg(legs[view], true).then(function () {
+      inflight = false;
+      advance();
+      render();
+      var other = view !== cur ? legs[cur] : legs[cur + 1];
+      if (other && ++tick % 3 === 0) {
+        setTimeout(function () {
+          fetchLeg(other, false).then(function () { advance(); render(); });
+        }, 2500);
+      }
+      clearTimeout(timer);
+      timer = setTimeout(cycle, document.hidden ? POLL_HIDDEN_MS : POLL_MS);
+    });
+  }
+
+  function fetchLeg(g, main) {
+    return fetch('api/aircraft/' + g.ident.kind + '/' + encodeURIComponent(g.ident.id), { cache: 'no-store' })
       .then(function (r) {
         // A non-JSON 200 or 404 means no relay answered (a plain static server);
         // anything else non-OK is the relay reporting that the feeds are down.
@@ -905,25 +1007,19 @@ window.FlightTracker = (function () {
         skew = isNaN(served) ? 0 : served - Date.now();
         return r.json();
       })
-      .then(function (d) { feedErr = 0; onData(d); })
-      .catch(function (status) { feedErr = status === 404 ? 404 : (status || -1); })
-      .then(function () {
-        inflight = false;
-        render();
-        clearTimeout(timer);
-        timer = setTimeout(poll, document.hidden ? POLL_HIDDEN_MS : POLL_MS);
-      });
+      .then(function (d) { if (main) feedErr = 0; onData(g, d); })
+      .catch(function (status) { if (main) feedErr = status === 404 ? 404 : (status || -1); });
   }
 
-  function onData(d) {
+  function onData(g, d) {
     var list = (d && d.ac) || [];
     var now = d && isNum(d.now) ? (d.now < 1e11 ? d.now * 1000 : d.now) - skew : Date.now();
-    if (now === lastNow) return; // same cached response as last time
-    lastNow = now;
+    if (now === g.lastNow) return; // same cached response as last time
+    g.lastNow = now;
 
     var withPos = list.filter(function (a) { return isNum(a.lat) && isNum(a.lon); });
     if (!withPos.length) {
-      if (list.length && !ac) ac = list[0];
+      if (list.length && !g.ac) g.ac = list[0];
       return;
     }
 
@@ -931,20 +1027,20 @@ window.FlightTracker = (function () {
     // daily flight number can be on two planes at once (yesterday's long-haul
     // still in the air): prefer the one nearest the origin, i.e. the later one.
     var pick = null;
-    for (var i = 0; i < withPos.length; i++) if (withPos[i].hex === hex) pick = withPos[i];
+    for (var i = 0; i < withPos.length; i++) if (withPos[i].hex === g.hex) pick = withPos[i];
     if (!pick) {
       withPos.sort(function (a, b) {
-        if (route) return distKm(a, route.from) - distKm(b, route.from);
+        if (g.route) return distKm(a, g.route.from) - distKm(b, g.route.from);
         return (a.seen_pos || 0) - (b.seen_pos || 0);
       });
       pick = withPos[0];
-      if (hex && pick.hex !== hex) { trail = []; airborneSeen = false; }
-      hex = pick.hex;
+      if (g.hex && pick.hex !== g.hex) { g.trail = []; g.airborneSeen = false; }
+      g.hex = pick.hex;
     }
-    ac = pick;
+    g.ac = pick;
 
     var ground = pick.alt_baro === 'ground';
-    fix = {
+    var fix = g.fix = {
       lat: pick.lat,
       lon: pick.lon,
       t: Math.min(Date.now(), now - (isNum(pick.seen_pos) ? pick.seen_pos : 0) * 1000),
@@ -954,84 +1050,129 @@ window.FlightTracker = (function () {
       track: isNum(pick.track) ? pick.track : pick.true_heading,
       vr: isNum(pick.baro_rate) ? pick.baro_rate : pick.geom_rate
     };
-    if (!ground && isNum(fix.gs) && fix.gs > 80) airborneSeen = true;
+    if (!ground && isNum(fix.gs) && fix.gs > 80) g.airborneSeen = true;
 
-    var lastPt = trail[trail.length - 1];
+    var lastPt = g.trail[g.trail.length - 1];
     if (!lastPt || fix.t - lastPt[2] > 30000 ||
         distKm(fix, { lat: lastPt[0], lon: lastPt[1] }) > 0.5) {
-      trail.push([fix.lat, fix.lon, fix.t]);
-      if (trail.length > 6000) trail.splice(0, trail.length - 6000);
+      g.trail.push([fix.lat, fix.lon, fix.t]);
+      if (g.trail.length > 6000) g.trail.splice(0, g.trail.length - 6000);
     }
 
     // Tracking by tail number: the route comes from whatever callsign it flies.
-    if (ident.kind === 'registration' && pick.flight && routeFor !== 'manual') {
-      fetchRoute(pick.flight.trim());
-    }
+    if (g.ident.kind === 'registration' && pick.flight) fetchRoute(g, pick.flight.trim());
 
-    save();
+    save(g);
     draw();
   }
 
-  function fetchRoute(cs) {
+  // Moves on to the next leg once this one has landed, or once the next one is
+  // already flying (the first leg may have landed out of coverage).
+  function advance() {
+    var moved = false;
+    while (cur < legs.length - 1 &&
+           (status(legs[cur])[0] === 'Landed' || legs[cur + 1].airborneSeen)) {
+      legs[cur].done = true;
+      cur++;
+      moved = true;
+    }
+    if (!moved) return;
+    if (follow) { view = cur; userMoved = false; }
+    save(legs[cur]);
+    drawRoutes();
+    draw();
+    fit();
+  }
+
+  function selectLeg(i) {
+    if (i === view || !legs[i]) return;
+    view = i;
+    follow = i === cur;
+    userMoved = false;
+    drawRoutes();
+    draw();
+    fit();
+    render();
+    cycle();
+  }
+
+  function fetchRoute(g, cs) {
     cs = String(cs || '').toUpperCase();
-    if (!/^[A-Z0-9]{2,8}$/.test(cs) || cs === routeFor || routeFor === 'manual') return;
-    routeFor = cs;
+    if (!/^[A-Z0-9]{2,8}$/.test(cs) || cs === g.routeFor || g.routeFor === 'manual') return;
+    g.routeFor = cs;
     fetch('api/route/' + cs)
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (d) {
         var fr = d && d.response && d.response.flightroute;
-        if (!fr || !fr.origin || !fr.destination) { routeState = 'none'; return; }
+        if (!fr || !fr.origin || !fr.destination) { g.routeState = 'none'; return; }
         var ap = function (a) {
           return { code: a.iata_code || a.icao_code, city: a.municipality || a.name,
                    lat: a.latitude, lon: a.longitude };
         };
-        setRoute(ap(fr.origin), ap(fr.destination), fr.airline && fr.airline.name, false);
+        setRoute(g, ap(fr.origin), ap(fr.destination), fr.airline && fr.airline.name, false);
       })
-      .catch(function () { routeState = 'none'; })
+      .catch(function () { g.routeState = 'none'; })
       .then(render);
   }
 
-  // COUNTDOWN_ROUTE ("SFO-ICN"): set by hand, looked up in site/airports.json,
-  // and trusted over anything adsbdb says.
-  function manualRoute(spec) {
-    var m = /^([A-Z]{3})(?:\s*(?:-|>|TO)\s*|\s+)([A-Z]{3})$/.exec(String(spec).trim().toUpperCase());
-    routeFor = 'manual';
-    if (!m) {
-      routeState = 'none';
-      routeErr = 'COUNTDOWN_ROUTE should be two airport codes like <code>SFO-ICN</code>, not <code>' +
-                 esc(spec) + '</code>.';
+  // COUNTDOWN_ROUTE, one leg per flight: set by hand, looked up in
+  // site/airports.json and trusted over anything adsbdb says. "PIT-SEA-PDX"
+  // chains the legs; "PIT-SEA, SEA-PDX" lists them.
+  function manualRoutes(spec) {
+    var shape = /^[A-Z]{3}(?:(?:\s*(?:-|>|TO)\s*|\s+)[A-Z]{3})+$/;
+    var parts = String(spec).toUpperCase().split(',').map(function (s) { return s.trim(); })
+                            .filter(Boolean);
+    var pairs = null;
+    if (parts.length && parts.every(function (p) { return shape.test(p); })) {
+      var codes = parts.map(function (p) { return p.match(/\b[A-Z]{3}\b/g); });
+      if (codes.length === legs.length && codes.every(function (c) { return c.length === 2; })) {
+        pairs = codes;
+      } else if (codes.length === 1 && codes[0].length === legs.length + 1) {
+        pairs = legs.map(function (g, i) { return [codes[0][i], codes[0][i + 1]]; });
+      }
+    }
+    legs.forEach(function (g) { g.routeFor = 'manual'; });
+    if (!pairs) {
+      legs.forEach(function (g) { g.routeState = 'none'; });
+      routeErr = 'COUNTDOWN_ROUTE should be ' + (legs.length > 1
+        ? 'one leg per flight, like <code>PIT-SEA-PDX</code> or <code>PIT-SEA, SEA-PDX</code>'
+        : 'two airport codes like <code>SFO-ICN</code>') + ', not <code>' + esc(spec) + '</code>.';
       return;
     }
     fetch('airports.json')
       .then(function (r) { return r.json(); })
       .then(function (db) {
-        var bad = [m[1], m[2]].filter(function (c) { return !db[c]; });
+        var bad = [];
+        pairs.forEach(function (p) {
+          p.forEach(function (c) { if (!db[c] && bad.indexOf(c) < 0) bad.push(c); });
+        });
         if (bad.length) {
-          routeState = 'none';
+          legs.forEach(function (g) { g.routeState = 'none'; });
           routeErr = 'COUNTDOWN_ROUTE: no airport with the code <code>' + esc(bad.join(', ')) + '</code>.';
           return;
         }
         var ap = function (c) { return { code: c, city: db[c][2], lat: db[c][0], lon: db[c][1] }; };
-        setRoute(ap(m[1]), ap(m[2]), null, true);
+        pairs.forEach(function (p, i) { setRoute(legs[i], ap(p[0]), ap(p[1]), null, true); });
       })
       .catch(function () {
-        routeState = 'none';
+        legs.forEach(function (g) { g.routeState = 'none'; });
         routeErr = 'Could not load <code>airports.json</code> for COUNTDOWN_ROUTE.';
       })
       .then(render);
   }
 
-  function setRoute(from, to, airline, manual) {
-    route = { from: from, to: to, airline: airline, manual: manual, km: distKm(from, to) };
-    routeState = 'ok';
-    drawRoute();
-    fit();
+  function setRoute(g, from, to, airline, manual) {
+    g.route = { from: from, to: to, airline: airline, manual: manual, km: distKm(from, to) };
+    g.routeState = 'ok';
+    drawRoutes();
+    if (g === legs[view]) fit();
   }
 
   // adsbdb's routes are crowd-sourced and sometimes out of date. Only trust one
   // while the plane is plausibly between its two airports: the detour via the
   // plane's position must be small next to the route itself.
-  function trustedRoute() {
+  function trustedRoute(g) {
+    var route = g.route, fix = g.fix;
     if (!route || !fix || route.manual) return route;
     var excess = distKm(route.from, fix) + distKm(fix, route.to) - route.km;
     return excess <= Math.max(150, route.km * 0.25) ? route : null;
@@ -1039,7 +1180,8 @@ window.FlightTracker = (function () {
 
   // Where the plane is now: the last fix, dead-reckoned forward for up to two
   // minutes so the marker keeps moving between polls.
-  function position() {
+  function position(g) {
+    var fix = g.fix;
     if (!fix) return null;
     var age = (Date.now() - fix.t) / 1000;
     if (fix.ground || !isNum(fix.gs) || !isNum(fix.track) || age > 120) return fix;
@@ -1047,21 +1189,27 @@ window.FlightTracker = (function () {
   }
 
   // Status pill: [text, class].
-  function status() {
+  function status(g) {
+    var fix = g.fix, ac = g.ac;
+    var prev = legs[legs.indexOf(g) - 1];
+    // Previous leg down, this one not yet moving: the connection.
+    var layover = prev && prev.done && !g.airborneSeen &&
+                  (!fix || (fix.ground && !(fix.gs > 5)));
     if (!fix) {
       if (feedErr === 404) return ['No data relay', 'alert'];
       if (feedErr) return ['Feed offline', 'warn'];
-      return ['Waiting for signal', 'warn'];
+      return layover ? ['Layover', 'ok'] : ['Waiting for signal', 'warn'];
     }
     if (ac && ac.emergency && ac.emergency !== 'none') {
       return ['Emergency ' + (ac.squawk || ''), 'alert'];
     }
     var age = (Date.now() - fix.t) / 1000;
-    var rt = trustedRoute();
+    var rt = trustedRoute(g);
     var atDest = rt && distKm(fix, rt.to) < NEAR_KM;
     var atFrom = rt && distKm(fix, rt.from) < NEAR_KM;
     if (fix.ground || (isNum(fix.gs) && fix.gs < 40 && isNum(fix.alt) && fix.alt < 1500)) {
-      if (atDest || (airborneSeen && !atFrom)) return ['Landed', 'done'];
+      if (atDest || (g.airborneSeen && !atFrom)) return ['Landed', 'done'];
+      if (layover) return ['Layover', 'ok'];
       return [isNum(fix.gs) && fix.gs > 5 ? 'Taxiing' : 'On the ground', 'ok'];
     }
     if (age > STALE_S) {
@@ -1085,35 +1233,53 @@ window.FlightTracker = (function () {
   function setHTML(node, s) { if (node.getAttribute('data-html') !== s) { node.setAttribute('data-html', s); node.innerHTML = s; } }
 
   function render() {
-    var st = status();
+    var g = legs[view], fix = g.fix, ac = g.ac, route = g.route;
+    var prev = legs[view - 1], next = legs[view + 1];
+    var st = status(g);
     var landed = st[0] === 'Landed';
-    var pos = position();
     var age = fix ? (Date.now() - fix.t) / 1000 : 0;
-    var rt = trustedRoute();
+    var rt = trustedRoute(g);
     var doubt = !!route && !rt;
 
+    setText(el.cs, g.ident.shown);
     setText(el.status, st[0]);
     el.status.className = 'fl-status is-' + st[1];
 
-    if (route) {
-      setHTML(el.route,
-        '<b>' + esc(route.from.code) + '</b> ' + esc(route.from.city) +
+    setHTML(el.route, route
+      ? '<b>' + esc(route.from.code) + '</b> ' + esc(route.from.city) +
         '<span class="arrow">&rarr;</span>' +
-        '<b>' + esc(route.to.code) + '</b> ' + esc(route.to.city));
-      el.route.classList.toggle('doubt', doubt);
-      el.map.classList.toggle('route-doubt', doubt);
+        '<b>' + esc(route.to.code) + '</b> ' + esc(route.to.city)
+      : '');
+    el.route.classList.toggle('doubt', doubt);
+    el.map.classList.toggle('route-doubt', doubt);
+
+    if (legs.length > 1) {
+      setHTML(el.legs, legs.map(function (x, i) {
+        var state = x.done ? 'done' : i === cur ? 'now' : 'next';
+        return '<button type="button" class="fl-leg is-' + state + (i === view ? ' is-viewed' : '') +
+          '" data-leg="' + i + '"' + (i === view ? ' aria-current="true"' : '') + '>' +
+          '<span class="fl-leg-n">' + (x.done ? '&#x2713;' : i + 1) + '</span>' + esc(x.ident.shown) +
+          (x.route ? ' <small>' + esc(x.route.from.code) + ' &rarr; ' + esc(x.route.to.code) + '</small>' : '') +
+          '</button>';
+      }).join('<span class="fl-leg-sep" aria-hidden="true"></span>'));
     }
 
     var note = '';
-    if (!fix) {
+    if (st[0] === 'Layover') {
+      note = esc(prev.ident.shown) + ' has landed' +
+             (prev.route ? ' in ' + esc(prev.route.to.city) : '') + '. Next up: ' + esc(g.ident.shown) +
+             (route ? ' to ' + esc(route.to.city) : '') + ', picked up as soon as its transponder ' +
+             'comes on - usually at the gate or on pushback.';
+    } else if (!fix) {
       if (feedErr === 404) {
         note = 'The page cannot reach its flight-data relay (<code>/api/aircraft</code>). ' +
                'It is part of the Docker image - serving <code>site/</code> on its own has no relay.';
       } else if (feedErr) {
         note = 'The ADS-B feeds are not answering right now. Retrying every few seconds.';
       } else {
-        note = esc(ident.shown) + ' is not on ADS-B yet' +
-               (ident.kind === 'callsign' && ident.id !== ident.shown ? ' (callsign ' + esc(ident.id) + ')' : '') +
+        var id = g.ident;
+        note = esc(id.shown) + ' is not on ADS-B yet' +
+               (id.kind === 'callsign' && id.id !== id.shown ? ' (callsign ' + esc(id.id) + ')' : '') +
                '. It shows up once its transponder is on and a receiver picks it up - usually at the gate ' +
                'or on the taxi out. Checking every few seconds.';
       }
@@ -1150,6 +1316,7 @@ window.FlightTracker = (function () {
 
     // distance, progress and arrival - only with a known route
     var progress = null;
+    var then = next ? ' · then ' + next.ident.shown : ' · straight line at current speed';
     if (rt && fix) {
       var remKm = distKm(fix, rt.to);
       var kmh = isNum(fix.gs) ? fix.gs * 1.852 : 0;
@@ -1160,17 +1327,21 @@ window.FlightTracker = (function () {
            num(remNow) + ' km · of ' + num(rt.km * 0.621371) + ' mi');
       progress = landed ? 1 : Math.min(1, Math.max(0, 1 - remNow / rt.km));
       if (landed) {
-        stat('eta', 'Arrived', rt.to.city);
+        stat('eta', 'Arrived', rt.to.city + (next ? ' · next: ' + next.ident.shown : ''));
       } else if (flying) {
         var eta = fix.t + remKm / kmh * 3600e3;
-        stat('eta', clockTime(eta), 'in ' + duration(eta - Date.now()) +
-             ' · straight line at current speed');
+        stat('eta', clockTime(eta), 'in ' + duration(eta - Date.now()) + then);
       } else {
         stat('eta', '—', 'once airborne');
       }
+    } else if (route && !doubt) {
+      // Layover or waiting: the route is known, the plane just is not moving yet.
+      stat('dist', num(route.km * 0.621371) + ' mi', num(route.km) + ' km · ' + route.from.code +
+           ' → ' + route.to.code);
+      stat('eta', '—', 'once airborne');
     } else {
       var why = !fix ? '' : doubt ? 'route on file looks wrong'
-              : routeState === 'pending' ? 'looking up route' : 'route unknown';
+              : g.routeState === 'pending' ? 'looking up route' : 'route unknown';
       stat('dist', '—', why);
       stat('eta', '—', why);
     }
@@ -1192,14 +1363,14 @@ window.FlightTracker = (function () {
       foot.push('ADS-B via <a href="https://' + feed + '" target="_blank" rel="noopener">' + feed + '</a>');
     }
     if (route && !route.manual) foot.push('route via <a href="https://www.adsbdb.com" target="_blank" rel="noopener">adsbdb</a>');
-    if (hex) foot.push('<a href="https://globe.adsb.fi/?icao=' + esc(hex) + '" target="_blank" rel="noopener">open in a full tracker</a>');
+    if (g.hex) foot.push('<a href="https://globe.adsb.fi/?icao=' + esc(g.hex) + '" target="_blank" rel="noopener">open in a full tracker</a>');
     setHTML(el.foot, foot.join(' · '));
 
-    var title = ident.shown + ' · ' +
+    var title = g.ident.shown + ' · ' +
       (fix && !fix.ground && isNum(fix.alt) && st[0] === 'In flight' ? num(fix.alt) + ' ft' : st[0]);
     if (document.title !== title) document.title = title;
 
-    drawPlane(pos, age > STALE_S);
+    drawPlane();
   }
 
   function clockTime(ms) {
@@ -1216,10 +1387,15 @@ window.FlightTracker = (function () {
 
   // ---- map ----
 
-  function ll(p) {
-    var ref = route ? route.from.lon : fix ? fix.lon : 0;
-    return [p.lat, near(p.lon, ref)];
+  // Every point is drawn relative to one reference longitude, so a trip across
+  // the date line stays one continuous picture.
+  function refLon() {
+    for (var i = 0; i < legs.length; i++) if (legs[i].route) return legs[i].route.from.lon;
+    var f = legs[view] && legs[view].fix;
+    return f ? f.lon : 0;
   }
+
+  function ll(p) { return [p.lat, near(p.lon, refLon())]; }
 
   function loadLeaflet() {
     if (window.L) return initMap();
@@ -1253,8 +1429,6 @@ window.FlightTracker = (function () {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    layers.route = L.polyline([], { className: 'fl-route-line', weight: 2, interactive: false }).addTo(map);
-    layers.trail = L.polyline([], { className: 'fl-trail-line', weight: 3, interactive: false }).addTo(map);
     layers.airports = L.layerGroup().addTo(map);
 
     var Fit = L.Control.extend({
@@ -1278,32 +1452,56 @@ window.FlightTracker = (function () {
     map.addControl(new Fit());
     map.on('dragstart', function () { userMoved = true; });
 
-    drawRoute();
+    drawRoutes();
     draw();
     fit();
   }
 
-  function drawRoute() {
-    if (!map || !route) return;
-    var pts = greatCircle(route.from, route.to, 128), prev = route.from.lon;
-    layers.route.setLatLngs(pts.map(function (p) {
-      prev = near(p.lon, prev);
-      return [p.lat, prev];
-    }));
+  // Planned routes for every leg: the one on screen bright, flown legs solid
+  // and dim, legs still to come dashed and dim.
+  function drawRoutes() {
+    if (!map) return;
+    layers.routes.forEach(function (l) { if (l) map.removeLayer(l); });
+    layers.routes = [];
     layers.airports.clearLayers();
-    [[route.from, 'bottom'], [route.to, 'top']].forEach(function (x) {
-      L.circleMarker(ll(x[0]), { radius: 4, weight: 2, className: 'fl-ap', interactive: false })
-        .bindTooltip(x[0].code, { permanent: true, direction: x[1], offset: [0, x[1] === 'top' ? -6 : 6],
-                                  className: 'fl-ap-tip' })
-        .addTo(layers.airports);
+    var labelled = {};
+    legs.forEach(function (g, i) {
+      if (!g.route) return;
+      var prev = refLon();
+      layers.routes[i] = L.polyline(greatCircle(g.route.from, g.route.to, 128).map(function (p) {
+        prev = near(p.lon, prev);
+        return [p.lat, prev];
+      }), {
+        className: 'fl-route-line' + (i === view ? ' is-viewed' : g.done ? ' is-done' : ''),
+        weight: 2,
+        interactive: false
+      }).addTo(map);
+      // Label each airport on the side away from the other end of its leg, so
+      // a short hop (SEA-PDX) does not stack its two labels on each other.
+      var north = g.route.to.lat >= g.route.from.lat;
+      [[g.route.from, north ? 'bottom' : 'top'], [g.route.to, north ? 'top' : 'bottom']].forEach(function (x) {
+        if (labelled[x[0].code]) return;
+        labelled[x[0].code] = true;
+        L.circleMarker(ll(x[0]), { radius: 4, weight: 2, className: 'fl-ap', interactive: false })
+          .bindTooltip(x[0].code, { permanent: true, direction: x[1], offset: [0, x[1] === 'top' ? -6 : 6],
+                                    className: 'fl-ap-tip' })
+          .addTo(layers.airports);
+      });
     });
   }
 
   function draw() {
     if (!map) return;
-    layers.trail.setLatLngs(trail.map(function (p) { return ll({ lat: p[0], lon: p[1] }); }));
-    if (fix && !layers.plane) fit();
-    drawPlane(position(), fix && (Date.now() - fix.t) / 1000 > STALE_S);
+    legs.forEach(function (g, i) {
+      if (!layers.trails[i]) {
+        layers.trails[i] = L.polyline([], { className: 'fl-trail-line', weight: 3, interactive: false }).addTo(map);
+      }
+      layers.trails[i].setLatLngs(g.trail.map(function (p) { return ll({ lat: p[0], lon: p[1] }); }));
+      var path = layers.trails[i].getElement();
+      if (path) path.classList.toggle('is-dim', i !== view);
+    });
+    if (legs[view].fix && !layers.plane) fit();
+    drawPlane();
   }
 
   var PLANE_SVG =
@@ -1311,8 +1509,14 @@ window.FlightTracker = (function () {
     '1.3 1 1.3 2.3v5.3l8.2 4.6v2l-8.2-2.5v5l2.3 1.7v1.6L12 20.6l-3.6 .9v-1.6l2.3-1.7v-5L2.5 ' +
     '15.7v-2l8.2-4.6V3.8c0-1.3.5-2.3 1.3-2.3z"/></svg>';
 
-  function drawPlane(pos, stale) {
-    if (!map || !pos) return;
+  // The plane of the leg on screen; none while that leg has not been seen.
+  function drawPlane() {
+    if (!map) return;
+    var g = legs[view], pos = position(g);
+    if (!pos) {
+      if (layers.plane) { map.removeLayer(layers.plane); layers.plane = null; }
+      return;
+    }
     var at = ll(pos);
     if (!layers.plane) {
       layers.plane = L.marker(at, {
@@ -1326,18 +1530,21 @@ window.FlightTracker = (function () {
     }
     var icon = layers.plane.getElement() && layers.plane.getElement().firstChild;
     if (icon) {
-      icon.style.transform = 'rotate(' + (fix && isNum(fix.track) ? fix.track : 0) + 'deg)';
-      icon.classList.toggle('stale', !!stale);
+      icon.style.transform = 'rotate(' + (isNum(g.fix.track) ? g.fix.track : 0) + 'deg)';
+      icon.classList.toggle('stale', (Date.now() - g.fix.t) / 1000 > STALE_S);
     }
     // Keep the plane in view unless the viewer has panned away themselves.
     if (!userMoved && !map.getBounds().pad(-0.08).contains(at)) fit();
   }
 
+  // Frames the leg on screen: its route and plane.
   function fit() {
     if (!map) return;
-    var pts = [];
-    if (trustedRoute()) layers.route.getLatLngs().forEach(function (p) { pts.push(p); });
-    var pos = position();
+    var g = legs[view], pts = [];
+    if (trustedRoute(g) && layers.routes[view]) {
+      layers.routes[view].getLatLngs().forEach(function (p) { pts.push(p); });
+    }
+    var pos = position(g);
     if (pos) pts.push(ll(pos));
     if (!pts.length) return;
     if (pts.length === 1) map.setView(pts[0], 8);
@@ -1349,19 +1556,21 @@ window.FlightTracker = (function () {
   return {
     // What the countdown shows under the clock before zero, or null if invalid.
     describe: function (raw) {
-      var id = parseIdent(raw);
-      return id && id.shown;
+      var ids = parseTrip(raw);
+      return ids && ids.map(function (id) { return id.shown; }).join(' → ');
     },
 
     start: function (raw, opts) {
-      ident = parseIdent(raw);
-      if (!ident) return false;
+      var ids = parseTrip(raw);
+      if (!ids) return false;
+      legs = ids.map(newLeg);
       zone = (opts && opts.tz) || '';
 
       el.section = document.getElementById('flight');
       el.cs = document.getElementById('flCs');
       el.status = document.getElementById('flStatus');
       el.route = document.getElementById('flRoute');
+      el.legs = document.getElementById('flLegs');
       el.progress = document.getElementById('flProgress');
       el.bar = document.getElementById('flBar');
       el.note = document.getElementById('flNote');
@@ -1375,20 +1584,24 @@ window.FlightTracker = (function () {
         el.s[k] = el.section.querySelector('[data-s="' + k + '"]');
       }
 
-      el.cs.textContent = ident.shown;
       el.section.hidden = false;
       el.section.parentNode.classList.add('has-flight');
+      el.legs.hidden = legs.length < 2;
+      el.legs.addEventListener('click', function (e) {
+        var b = e.target.closest && e.target.closest('[data-leg]');
+        if (b) selectLeg(+b.getAttribute('data-leg'));
+      });
 
       restore();
-      if (opts && opts.route) manualRoute(opts.route);
-      else if (ident.kind === 'callsign') fetchRoute(ident.id);
+      if (opts && opts.route) manualRoutes(opts.route);
+      else legs.forEach(function (g) { if (g.ident.kind === 'callsign') fetchRoute(g, g.ident.id); });
       render();
       loadLeaflet();
-      poll();
+      cycle();
 
       setInterval(render, 1000);
       document.addEventListener('visibilitychange', function () {
-        if (!document.hidden && Date.now() - lastPoll > POLL_MS) poll();
+        if (!document.hidden && Date.now() - lastPoll > POLL_MS) cycle();
       });
       return true;
     }
