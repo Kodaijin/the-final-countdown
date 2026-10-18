@@ -1,13 +1,16 @@
 # The Final Countdown
 
 A single-page countdown to a deadline you set, showing days, hours, minutes, seconds and
-hundredths of a second. No dependencies, no build step — one static HTML file served by
-nginx in a container.
+hundredths of a second — and, once it hits zero, a live tracker for a flight you name: map,
+altitude, speed, distance to go and an arrival estimate. No build step — one static HTML
+file served by nginx in a container, which also relays the public flight data.
 
 ```
 site/index.html      the entire app - markup, CSS and JS in one file
 site/config.js       deadline settings for serving site/ without Docker
-docker/              nginx config and the entrypoint that inlines the deadline
+site/airports.json   airport codes -> coordinates, for COUNTDOWN_ROUTE
+docker/              nginx config (+ flight-data relay) and the entrypoint scripts
+tools/               build-airports.py, which regenerates site/airports.json
 .env.example         template for the COUNTDOWN_* variables compose reads
 Dockerfile           nginx:alpine, copies site/ into the image
 docker-compose.yml   one service, port 8080:80
@@ -52,6 +55,8 @@ docker compose up -d --build
 COUNTDOWN_TARGET=2026-10-29T18:00:00   # required - when it ends
 COUNTDOWN_TZ=America/Los_Angeles       # the zone that time is written in
 COUNTDOWN_LABEL=                       # caption under the clock; blank = generated
+COUNTDOWN_FLIGHT=                      # flight to track after zero, e.g. UA 1 (optional)
+COUNTDOWN_ROUTE=                       # its route, e.g. SFO-ICN (optional, recommended)
 ```
 
 `COUNTDOWN_TARGET` is read as wall-clock time in `COUNTDOWN_TZ`, so you write the time you
@@ -107,6 +112,8 @@ at whichever layer notices first:
 | A stale `config.js` from a CDN edge | Ignored - the deadline inlined in the page wins |
 | Target that does not parse | The page shows the value it could not read and the expected format |
 | `COUNTDOWN_TZ` not an IANA zone | The page names the bad zone |
+| `COUNTDOWN_FLIGHT` / `COUNTDOWN_ROUTE` with stray characters | The container exits 1 and says which one |
+| `COUNTDOWN_ROUTE` with an unknown airport code | The tracker names the code it could not find |
 
 One consequence of the compose-level check: while `COUNTDOWN_TARGET` is unset, *every*
 `docker compose` subcommand refuses to run, `down` and `ps` included. Set the variable, or
@@ -122,13 +129,78 @@ http://localhost:8080/?t=2027-01-01T00:00:00Z&label=Liftoff
 `?t=` wins over the environment and stands alone: it does not inherit `COUNTDOWN_TZ` or
 `COUNTDOWN_LABEL`, so add `?tz=` and `?label=` if you want them.
 
+`?flight=` and `?route=` do the same for the tracker. The flight carries over a `?t=`
+(it is not tied to the deadline), so a past `?t=` is the quick way to try the tracker on a
+plane that is in the air right now:
+
+```
+http://localhost:8080/?t=2020-01-01T00:00Z&flight=UA1947
+http://localhost:8080/?t=2020-01-01T00:00Z&flight=OZ203&route=LAX-ICN
+```
+
+## After zero: live flight tracking
+
+Set `COUNTDOWN_FLIGHT` and the clock hands over to a flight tracker when it reaches zero —
+after four seconds of TIME'S UP if you watched it happen, straight away if you open the
+page later. Before zero, a line under the caption says which flight will be tracked.
+
+```sh
+COUNTDOWN_FLIGHT=UA 1        # flight number, ADS-B callsign (UAL1) or tail number (N81110)
+COUNTDOWN_ROUTE=SFO-SIN      # two IATA airport codes; optional but recommended
+```
+
+The tracker shows the plane on a map with its route and trail, plus altitude and climb
+rate, ground speed, heading, distance to go, a progress bar and an estimated arrival time
+(in `COUNTDOWN_TZ`), the aircraft type and registration, and a status: *Waiting for
+signal*, *On the ground*, *Taxiing*, *In flight*, *Signal lost*, *Landed*, or an
+*Emergency* squawk. It polls every 5 seconds (30 in a background tab) and keeps its trail
+in the browser, so a reload mid-flight keeps the line drawn so far.
+
+**Where the data comes from.** Positions are public ADS-B from
+[adsb.fi](https://adsb.fi), falling back to [adsb.lol](https://adsb.lol); routes, when
+`COUNTDOWN_ROUTE` is blank, from [adsbdb](https://www.adsbdb.com); map tiles from
+OpenStreetMap; Leaflet from unpkg. None needs an API key. The feeds send no CORS headers,
+so nginx relays three fixed lookups under `/api/` (see `docker/default.conf`) and caches
+them for a few seconds — every viewer shares one upstream request per flight, which keeps
+well inside adsb.fi's 1-request-a-second limit however many people are watching. Upstream
+hosts are resolved per request (`docker/25-flight-resolver.sh` sets up the resolver), so a
+DNS failure can only break the tracker, never stop the countdown from being served.
+
+Serving `site/` without Docker gives you the countdown but no relay; the tracker then says
+*No data relay*.
+
+**Things worth knowing before the day:**
+
+- *Flight numbers vs callsigns.* Planes broadcast an ICAO callsign (`UAL1`), not the
+  flight number on your ticket (`UA 1`). The page converts the common airlines'
+  two-letter codes, but regional flights sold under a mainline number usually fly under
+  the operator's own callsign (a `UA 5xxx` is often `SKW…`), and some airlines use
+  alphanumeric callsigns. If the tracker sits on *Waiting for signal* while the plane is
+  plainly airborne, look the flight up on FlightAware and use the callsign it lists.
+- *Set the route.* adsbdb's routes are crowd-sourced and often stale for domestic flights.
+  The tracker refuses to use one that does not fit where the plane is — it crosses the route
+  out and hides distance and arrival — but `COUNTDOWN_ROUTE` avoids the problem entirely.
+- *Coverage gaps.* ADS-B comes from volunteer receivers on the ground, so planes vanish
+  over oceans and remote areas. The tracker shows *Signal lost*, greys the plane out and
+  keeps estimating distance and arrival from the last report until it reappears.
+- *Arrival is an estimate*: great-circle distance at the current ground speed. It runs long
+  during climb-out and settles down at cruise.
+- *Daily flight numbers.* A long-haul callsign can be on two planes at once (yesterday's
+  still landing as today's leaves). The tracker prefers the one nearest the origin and then
+  stays locked to that airframe.
+
+`site/airports.json` is built from [OurAirports](https://ourairports.com/data/) (public
+domain): every airport with an IATA code and scheduled service. Regenerate it with
+`python3 tools/build-airports.py`.
+
 ## Notes
 
 - The clock is driven by `requestAnimationFrame` against `Date.now()`, so the hundredths
   field stays smooth and never drifts, even if a tab is throttled and resumes.
 - Digits use tabular figures in a fixed layout, so nothing shifts sideways as they change.
 - Under 700px wide the clock wraps to two rows for phones.
-- At zero the page stops ticking and shows "TIME'S UP".
+- At zero the page stops ticking and shows "TIME'S UP" — then the flight tracker, if one
+  is configured.
 
 ## The background
 

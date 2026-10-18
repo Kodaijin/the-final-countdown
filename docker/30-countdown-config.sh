@@ -9,6 +9,8 @@ template=/usr/share/nginx/template/index.html
 : "${COUNTDOWN_TARGET:=}"
 : "${COUNTDOWN_TZ:=}"
 : "${COUNTDOWN_LABEL:=}"
+: "${COUNTDOWN_FLIGHT:=}"
+: "${COUNTDOWN_ROUTE:=}"
 
 # The deadline is required. Refusing to start is deliberate: a container that
 # came up serving some fallback date would look like a working deploy.
@@ -26,11 +28,20 @@ if [ -z "$COUNTDOWN_TARGET" ]; then
 fi
 
 # Single quotes would break out of the JS string literals below.
-for v in "$COUNTDOWN_TARGET" "$COUNTDOWN_TZ" "$COUNTDOWN_LABEL"; do
+for v in "$COUNTDOWN_TARGET" "$COUNTDOWN_TZ" "$COUNTDOWN_LABEL" "$COUNTDOWN_FLIGHT" "$COUNTDOWN_ROUTE"; do
   case "$v" in
     *\'*|*\*) echo "$0: COUNTDOWN_* values may not contain quotes or backslashes" >&2; exit 1 ;;
   esac
 done
+
+# A flight number or tail number is letters, digits, spaces and dashes - anything
+# else is a typo the tracker would only fail on hours later, at zero.
+case "$COUNTDOWN_FLIGHT" in
+  *[!A-Za-z0-9\ -]*) echo "$0: COUNTDOWN_FLIGHT '$COUNTDOWN_FLIGHT' is not a flight or tail number (e.g. UA 1, UAL1, N81110)" >&2; exit 1 ;;
+esac
+case "$COUNTDOWN_ROUTE" in
+  *[!A-Za-z\ \>-]*) echo "$0: COUNTDOWN_ROUTE '$COUNTDOWN_ROUTE' should be two airport codes, e.g. SFO-ICN" >&2; exit 1 ;;
+esac
 
 started=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 
@@ -43,6 +54,8 @@ cat > "$block" <<JS
     target: '${COUNTDOWN_TARGET}',
     tz: '${COUNTDOWN_TZ}',
     label: '${COUNTDOWN_LABEL}',
+    flight: '${COUNTDOWN_FLIGHT}',
+    route: '${COUNTDOWN_ROUTE}',
     generatedAt: '${started}'
   };
 </script>
@@ -69,8 +82,15 @@ window.COUNTDOWN = {
   target: '${COUNTDOWN_TARGET}',
   tz: '${COUNTDOWN_TZ}',
   label: '${COUNTDOWN_LABEL}',
+  flight: '${COUNTDOWN_FLIGHT}',
+  route: '${COUNTDOWN_ROUTE}',
   generatedAt: '${started}'
 };
 JS
 
 echo "$0: deadline set to '${COUNTDOWN_TARGET}' ${COUNTDOWN_TZ:+(${COUNTDOWN_TZ})} at $started"
+if [ -n "$COUNTDOWN_FLIGHT" ]; then
+  echo "$0: tracking flight '${COUNTDOWN_FLIGHT}'${COUNTDOWN_ROUTE:+ (${COUNTDOWN_ROUTE})} after zero"
+else
+  echo "$0: no COUNTDOWN_FLIGHT set - the page just says TIME'S UP at zero"
+fi
