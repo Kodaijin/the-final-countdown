@@ -1,5 +1,5 @@
 // Deadline settings. Inside the container this file is overwritten on every start
-// from COUNTDOWN_TARGET / COUNTDOWN_TZ / COUNTDOWN_LABEL in .env, by
+// from the COUNTDOWN_* settings in .env, by
 // docker/30-countdown-config.sh. There is no default deadline: a blank target
 // makes the page say so instead of counting down to an arbitrary date.
 // Serving site/ without Docker? Fill in target (and tz) here by hand.
@@ -8,5 +8,6 @@ window.COUNTDOWN = {
   tz: '',       // e.g. 'America/Los_Angeles'; blank means the viewer's own timezone
   label: '',    // caption under the clock; blank = generated from the target
   flight: '',   // tracked live after zero, e.g. 'UA 1', or 'AS 414, AS 488' (needs the Docker relay)
-  route: ''     // optional, e.g. 'SFO-ICN' or 'PIT-SEA-PDX'; blank = looked up from the flight numbers
+  route: '',    // optional, e.g. 'SFO-ICN' or 'PIT-SEA-PDX'; blank = looked up from the flight numbers
+  bg: ''        // default background: synthwave (blank), hyperspace, globe, board or aurora
 };

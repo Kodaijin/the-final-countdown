@@ -11,6 +11,7 @@ template=/usr/share/nginx/template/index.html
 : "${COUNTDOWN_LABEL:=}"
 : "${COUNTDOWN_FLIGHT:=}"
 : "${COUNTDOWN_ROUTE:=}"
+: "${COUNTDOWN_BG:=}"
 
 # The deadline is required. Refusing to start is deliberate: a container that
 # came up serving some fallback date would look like a working deploy.
@@ -28,7 +29,7 @@ if [ -z "$COUNTDOWN_TARGET" ]; then
 fi
 
 # Single quotes would break out of the JS string literals below.
-for v in "$COUNTDOWN_TARGET" "$COUNTDOWN_TZ" "$COUNTDOWN_LABEL" "$COUNTDOWN_FLIGHT" "$COUNTDOWN_ROUTE"; do
+for v in "$COUNTDOWN_TARGET" "$COUNTDOWN_TZ" "$COUNTDOWN_LABEL" "$COUNTDOWN_FLIGHT" "$COUNTDOWN_ROUTE" "$COUNTDOWN_BG"; do
   case "$v" in
     *\'*|*\*) echo "$0: COUNTDOWN_* values may not contain quotes or backslashes" >&2; exit 1 ;;
   esac
@@ -44,6 +45,13 @@ case "$COUNTDOWN_ROUTE" in
   *[!A-Za-z\ ,\>-]*) echo "$0: COUNTDOWN_ROUTE '$COUNTDOWN_ROUTE' should be airport codes, e.g. SFO-ICN or PIT-SEA-PDX" >&2; exit 1 ;;
 esac
 
+# The default background; viewers can still switch with the picker or ?bg=.
+COUNTDOWN_BG=$(printf '%s' "$COUNTDOWN_BG" | tr 'A-Z' 'a-z')
+case "$COUNTDOWN_BG" in
+  ''|synthwave|hyperspace|globe|board|aurora) ;;
+  *) echo "$0: COUNTDOWN_BG '$COUNTDOWN_BG' is not a background - use synthwave, hyperspace, globe, board or aurora" >&2; exit 1 ;;
+esac
+
 started=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 
 block=$(mktemp)
@@ -57,6 +65,7 @@ cat > "$block" <<JS
     label: '${COUNTDOWN_LABEL}',
     flight: '${COUNTDOWN_FLIGHT}',
     route: '${COUNTDOWN_ROUTE}',
+    bg: '${COUNTDOWN_BG}',
     generatedAt: '${started}'
   };
 </script>
@@ -85,6 +94,7 @@ window.COUNTDOWN = {
   label: '${COUNTDOWN_LABEL}',
   flight: '${COUNTDOWN_FLIGHT}',
   route: '${COUNTDOWN_ROUTE}',
+  bg: '${COUNTDOWN_BG}',
   generatedAt: '${started}'
 };
 JS
@@ -95,3 +105,4 @@ if [ -n "$COUNTDOWN_FLIGHT" ]; then
 else
   echo "$0: no COUNTDOWN_FLIGHT set - the page just says TIME'S UP at zero"
 fi
+echo "$0: default background: ${COUNTDOWN_BG:-synthwave}"

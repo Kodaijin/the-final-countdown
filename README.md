@@ -1,8 +1,9 @@
 # The Final Countdown
 
 A single-page countdown to a deadline you set, showing days, hours, minutes, seconds and
-hundredths of a second — and, once it hits zero, a live tracker for a flight you name: map,
-altitude, speed, distance to go and an arrival estimate. No build step — one static HTML
+hundredths of a second, over a choice of five animated backgrounds. The last ten seconds take
+over the screen, zero gets fireworks, and then a live tracker follows a flight you name: map,
+altitude, speed, distance to go, an altitude chart and a second countdown to the landing. No build step — one static HTML
 file served by nginx in a container, which also relays the public flight data.
 
 ```
@@ -57,6 +58,7 @@ COUNTDOWN_TZ=America/Los_Angeles       # the zone that time is written in
 COUNTDOWN_LABEL=                       # caption under the clock; blank = generated
 COUNTDOWN_FLIGHT=                      # flight(s) to track after zero, e.g. AS 414, AS 488
 COUNTDOWN_ROUTE=                       # their route, e.g. PIT-SEA-PDX (optional, recommended)
+COUNTDOWN_BG=                          # default background; blank = synthwave (see Backgrounds)
 ```
 
 `COUNTDOWN_TARGET` is read as wall-clock time in `COUNTDOWN_TZ`, so you write the time you
@@ -76,7 +78,7 @@ free when nothing changed (every layer is cached) and is the only way to be sure
 container matches the checkout.
 
 Serving `site/` directly with no container? Fill in `site/config.js` by hand; it holds the
-same three settings and ships blank.
+same settings and ships blank.
 
 ### Behind Cloudflare or any other CDN
 
@@ -113,6 +115,7 @@ at whichever layer notices first:
 | Target that does not parse | The page shows the value it could not read and the expected format |
 | `COUNTDOWN_TZ` not an IANA zone | The page names the bad zone |
 | `COUNTDOWN_FLIGHT` / `COUNTDOWN_ROUTE` with stray characters | The container exits 1 and says which one |
+| `COUNTDOWN_BG` not one of the five backgrounds | The container exits 1 and lists them |
 | `COUNTDOWN_ROUTE` with an unknown airport code | The tracker names the code it could not find |
 
 One consequence of the compose-level check: while `COUNTDOWN_TARGET` is unset, *every*
@@ -128,6 +131,8 @@ http://localhost:8080/?t=2027-01-01T00:00:00Z&label=Liftoff
 
 `?t=` wins over the environment and stands alone: it does not inherit `COUNTDOWN_TZ` or
 `COUNTDOWN_LABEL`, so add `?tz=` and `?label=` if you want them.
+
+`?bg=globe` (or any background name) opens on that background, whatever the default.
 
 `?flight=` and `?route=` do the same for the tracker. The flight carries over a `?t=`
 (it is not tied to the deadline), so a past `?t=` is the quick way to try the tracker on a
@@ -217,22 +222,78 @@ domain): every airport with an IATA code and scheduled service. Regenerate it wi
 - Under 700px wide the clock wraps to two rows for phones.
 - At zero the page stops ticking and shows "TIME'S UP" — then the flight tracker, if one
   is configured.
+- The tab title is the time left (`2d 04:13:22 · The Final Countdown`), so it reads from
+  any other tab.
 
-## The background
+## Backgrounds
 
-A synthwave scene drawn entirely in CSS — stars, a banded sun clipped at the horizon, a
-glowing horizon line and a perspective grid floor. It reacts to the countdown from the same
-`requestAnimationFrame` loop that drives the digits:
+`COUNTDOWN_BG` sets which one viewers see first:
 
-- **Beat** — the horizon and the sun's bloom pulse on every whole second, in sync with the
-  digits (`beat = (1 - frac) ** 4` off the same remaining-ms value).
-- **Speed ramp** — the grid scrolls at ~18 px/s when the deadline is weeks away and
-  accelerates continuously to ~900 px/s in the final seconds, interpolated on
-  `log10(seconds remaining)` so there are no visible steps.
+| Name | What it is |
+| --- | --- |
+| `synthwave` (default) | Banded sun, glowing horizon and a perspective grid floor, all CSS |
+| `hyperspace` | A starfield that stretches into light-speed streaks at the end, then drops out of warp |
+| `globe` | Earth turning, with `COUNTDOWN_ROUTE` drawn on it; at zero it dives in on the first airport. Drag to spin it |
+| `board` | A split-flap departures board with your flight(s) pinned on top: *On time*, *Boarding* in the last hour, *Final call* in the last ten minutes, then the tracker's status |
+| `aurora` | Northern lights over a mountain skyline, green and slow far out, magenta and fast at the end |
+
+Viewers can switch with the menu in the bottom-right corner. Their pick is remembered in
+their own browser, so a changed `COUNTDOWN_BG` only reaches people who never picked one (or
+who pick the entry marked *default*). A `?bg=` link beats both.
+
+Every background runs off the same `requestAnimationFrame` loop that drives the digits, and
+reacts to the countdown the same three ways:
+
+- **Beat** — a pulse on every whole second, in sync with the digits
+  (`beat = (1 - frac) ** 4` off the same remaining-ms value).
+- **Speed ramp** — ~18 px/s when the deadline is weeks away, accelerating continuously to
+  ~900 px/s in the final seconds, interpolated on `log10(seconds remaining)` so there are no
+  visible steps. Synthwave scrolls its grid at that speed; the others map it to warp speed,
+  spin, flap rate or wave speed.
 - **Palette** — the accent hue slides from cyan (186°) to hot magenta (320°) as time runs
   out, via a single `--accent-h` custom property that every layer derives from.
 
-Tuning knobs live at the top of the script: `SPEED`, `HUE_CALM` / `HUE_HOT`, and `TILE` /
-`TILT` (which must stay in step with the `.grid` CSS). Per frame the page writes one
-transform and three opacity/transform values on four elements — no per-frame layout — and
-`prefers-reduced-motion` freezes the grid and the beat while keeping the palette shift.
+They also follow the mouse (or the phone's tilt) with a little parallax, and answer a tap
+anywhere on the background: a shooting star, a burst of sparks, a ping on the globe, a row
+of the board flapping round, a ripple through the aurora.
+
+The globe's land outlines come from [world-atlas](https://github.com/topojson/world-atlas)
+(Natural Earth, public domain) on jsDelivr, fetched only when the globe is showing; without
+them it still draws its grid and the route.
+
+Tuning knobs live in the page script: `SPEED`, `HUE_CALM` / `HUE_HOT`, and synthwave's
+`TILE` / `TILT` (which must stay in step with the `.grid` CSS). `prefers-reduced-motion`
+freezes the motion, the parallax and the fireworks while keeping the palette shift.
+
+## The big moments
+
+- **Last ten seconds** — the clock gives way to one huge number, 10 to 1, each landing with
+  a punch.
+- **Zero** — a white flash, fireworks and confetti, and the background's own moment (the sun
+  flares, the stars drop out of warp, the globe dives in, the board flaps every tile, the
+  aurora blooms). Only for viewers who were watching; a page opened afterwards goes
+  straight to the tracker.
+- **Takeoff to landing** — while the tracked plane is in the air, big digits count down to
+  its estimated landing, and the background ramps up again toward it. The final leg's
+  landing gets confetti and an airport chime.
+
+## Corner controls
+
+They fade out after a few idle seconds and come back on any movement.
+
+- **Background** menu, as above.
+- **Sound** (off by default): a soft tick each second, a drone that rises through the last
+  minute, and a synthesized fanfare at zero. Browsers only allow audio after a click or tap,
+  so after a reload it starts on the first one.
+- **Flight alerts** (with `COUNTDOWN_FLIGHT` set): browser notifications for zero, takeoff,
+  each landing and any emergency squawk — they arrive with the tab in the background.
+- **Keep screen on**, for a page left up on a TV or a spare laptop.
+- **Full screen**.
+
+Alerts and keep-screen-on are browser features that only work over https (or on
+`localhost`), so they do not appear when the page is opened by a plain-http LAN address.
+Behind Cloudflare they work. iPhones ask once for motion access the first time the page is
+tapped; that only drives the tilt parallax.
+
+The tracker also shows the nearest town with an airport under the plane (from
+`site/airports.json`) and an altitude chart of the leg so far — hover it for readings.

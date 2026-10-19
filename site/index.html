@@ -677,6 +677,360 @@
   .fl-plane svg { display: block; width: 100%; height: 100%; }
   .fl-plane.stale { color: #8a94a6; filter: drop-shadow(0 0 3px #000); }
 
+  /* second act: counting down to the landing */
+  .fl-arrive {
+    margin-top: 18px;
+    text-align: center;
+  }
+  .fl-arrive[hidden] { display: none; }
+
+  .fl-arrive-lbl {
+    font-size: clamp(0.62rem, 1.3vw, 0.85rem);
+    letter-spacing: 0.3em;
+    text-indent: 0.3em;
+    text-transform: uppercase;
+    color: #9fb0c2;
+  }
+
+  .fl-arrive-clock {
+    margin-top: 8px;
+    font-size: clamp(2.2rem, 7vw, 5.2rem);
+    line-height: 1;
+    font-weight: 700;
+    color: #f4feff;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.85), 0 0 14px var(--glow), 0 0 40px var(--glow);
+  }
+  .fl-arrive-clock i {
+    font-style: normal;
+    font-size: 0.36em;
+    letter-spacing: 0.1em;
+    margin: 0 0.6em 0 0.1em;
+    color: #9fb0c2;
+    text-shadow: none;
+  }
+  .fl-arrive-clock i:last-child { margin-right: 0; }
+
+  /* altitude over the leg so far */
+  .fl-alt {
+    position: relative;
+    margin-top: clamp(12px, 2vw, 22px);
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 6px;
+  }
+
+  .fl-alt-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .fl-alt-head span {
+    font-size: 0.62rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #7f8fa3;
+  }
+  .fl-alt-head b {
+    font-size: 0.8rem;
+    color: #f4feff;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .fl-alt svg {
+    display: block;
+    width: 100%;
+    height: 130px;
+    margin-top: 8px;
+    overflow: visible;
+    touch-action: pan-y;
+  }
+  .fl-alt svg[hidden] { display: none; }
+  .fl-alt .gl { stroke: rgba(255, 255, 255, 0.08); stroke-width: 1; }
+  .fl-alt .ax { fill: #7f8fa3; font-size: 10px; font-family: var(--mono); }
+  .fl-alt .ln {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+  .fl-alt .ar { fill: hsl(var(--accent-h) 100% 62% / 0.12); }
+  .fl-alt .xh { stroke: rgba(255, 255, 255, 0.35); stroke-width: 1; }
+  .fl-alt .dot { fill: var(--accent); stroke: #0b0a18; stroke-width: 2; }
+
+  .fl-alt-tip {
+    position: absolute;
+    z-index: 1;
+    pointer-events: none;
+    padding: 4px 8px;
+    font-size: 0.72rem;
+    color: #f4feff;
+    white-space: nowrap;
+    background: rgba(5, 6, 10, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    transform: translate(-50%, -100%);
+  }
+  .fl-alt-tip[hidden] { display: none; }
+
+  .fl-alt-empty {
+    margin: 10px 0 2px;
+    font-size: 0.72rem;
+    color: #6b7a8c;
+  }
+  .fl-alt-empty[hidden] { display: none; }
+
+  /* ---------- the last ten seconds, and zero ---------- */
+
+  .final {
+    display: none;
+    font-size: clamp(9rem, 44vmin, 30rem);
+    line-height: 1;
+    font-weight: 700;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+    text-shadow:
+      0 0 10px rgba(0, 0, 0, 0.85),
+      0 0 30px var(--glow),
+      0 0 90px var(--glow),
+      0 0 180px hsl(var(--accent-h) 100% 62% / 0.5);
+  }
+  .is-final .clock { display: none; }
+  .is-final .final { display: block; }
+  .tracking .final { display: none; }
+
+  .eyebrow, .clock, .final { -webkit-user-select: none; user-select: none; }
+
+  .flash {
+    position: fixed;
+    inset: 0;
+    z-index: 6;
+    pointer-events: none;
+    background: #fff;
+    opacity: 0;
+  }
+
+  .fx {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  /* synthwave: a tap throws a shooting star */
+  .shoot {
+    position: absolute;
+    width: 150px;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, transparent, hsl(var(--accent-h) 100% 72% / 0.6) 70%, #fff);
+    filter: drop-shadow(0 0 6px var(--glow));
+    transform-origin: 0 50%;
+    pointer-events: none;
+  }
+
+  /* ---------- other backgrounds (COUNTDOWN_BG, ?bg= or the picker) ---------- */
+
+  .scene[hidden] { display: none; }
+
+  .scene canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .bg-hyperspace {
+    background: radial-gradient(ellipse at 50% 50%, #0d0924 0%, #05040e 55%, #020207 100%);
+  }
+
+  .bg-globe {
+    background: radial-gradient(ellipse at 50% 45%, #0b0b24 0%, #05060f 55%, #020208 100%);
+  }
+  .bg-globe .stars { opacity: 0.6; }
+  html[data-bg="globe"] body:not(.tracking) { touch-action: none; }
+
+  .bg-aurora {
+    background: linear-gradient(to bottom, #01030a 0%, #030817 40%, #06162a 74%, #0a1d2c 100%);
+  }
+  .bg-aurora canvas { mix-blend-mode: screen; }
+  .bg-aurora .ridge {
+    position: absolute;
+    left: -4%;
+    bottom: 0;
+    width: 108%;
+    display: block;
+  }
+  .bg-aurora .ridge.far { height: 36vh; }
+  .bg-aurora .ridge.near { height: 26vh; }
+
+  /* departure board: split-flap tiles, dimmed so the clock reads over them */
+  .bg-board {
+    display: grid;
+    place-items: center;
+    perspective: 1400px;
+    background: radial-gradient(ellipse at 50% 40%, #13131b 0%, #08080c 70%, #050507 100%);
+  }
+  .bg-board .scrim {
+    background: radial-gradient(
+      ellipse 66% 40% at 50% 50%,
+      rgba(5, 6, 10, 0.78) 0%,
+      rgba(5, 6, 10, 0.45) 60%,
+      transparent 88%
+    );
+  }
+
+  .board {
+    font-family: var(--mono);
+    font-weight: 700;
+    color: #f1ede2;
+    opacity: 0.45;
+    transform-style: preserve-3d;
+  }
+
+  .bhead {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.7em;
+  }
+  .btitle {
+    font-size: 1.15em;
+    letter-spacing: 0.35em;
+    color: #ffd166;
+  }
+  .bcols {
+    display: flex;
+    gap: calc(0.6em / 0.62);   /* the rows' 0.6em gap, at this smaller size */
+    white-space: nowrap;
+    margin-bottom: 0.35em;
+    font-size: 0.62em;
+    letter-spacing: 0.2em;
+    color: #8f96a3;
+  }
+
+  .brow {
+    position: relative;
+    display: flex;
+    gap: 0.6em;
+    margin-bottom: 0.28em;
+  }
+  .bfld { display: flex; gap: 0.08em; }
+
+  .ch {
+    display: inline-block;
+    width: 0.82em;
+    height: 1.22em;
+    line-height: 1.22em;
+    text-align: center;
+    border-radius: 0.1em;
+    background: linear-gradient(#1c1c22 0 49%, #050507 49% 51%, #17171c 51%);
+  }
+
+  .bglow {
+    position: absolute;
+    inset: -0.14em -0.3em;
+    border: 1px solid hsl(var(--accent-h) 100% 62% / 0.7);
+    border-radius: 0.2em;
+    box-shadow: 0 0 1em hsl(var(--accent-h) 100% 62% / 0.45);
+    pointer-events: none;
+  }
+  .brow.hl .ch { color: hsl(var(--accent-h) 100% 78%); }
+  .bfld.r-ok .ch { color: #7dffb2; }
+  .bfld.r-warn .ch { color: #ffd166; }
+  .bfld.r-bad .ch { color: #ff4d6d; }
+  .bfld.r-hot .ch { color: hsl(var(--accent-h) 100% 72%); }
+
+  /* the clock's own digits become flap tiles to match */
+  html[data-bg="board"] .val {
+    padding: 0.04em 0.1em;
+    border-radius: 0.07em;
+    background: linear-gradient(#1c1c22 0 49.4%, #000 49.4% 50.6%, #16161b 50.6%);
+    box-shadow: 0 0.04em 0.12em rgba(0, 0, 0, 0.6);
+    text-shadow: 0 0 10px var(--glow);
+  }
+  html[data-bg="board"] .cs { text-shadow: none; }
+
+  /* ---------- corner controls ---------- */
+
+  .controls {
+    position: fixed;
+    right: 14px;
+    bottom: 14px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px;
+    border-radius: 10px;
+    background: rgba(8, 7, 20, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    transition: opacity 0.6s;
+  }
+  .controls.idle:not(:hover):not(:focus-within) { opacity: 0.14; }
+
+  .ctl {
+    display: inline-grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    color: #bccbdb;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  .ctl[hidden] { display: none; }
+  .ctl:hover { color: #fff; border-color: rgba(255, 255, 255, 0.3); }
+  .ctl[aria-pressed="true"] {
+    color: var(--accent);
+    border-color: hsl(var(--accent-h) 100% 62% / 0.6);
+    background: hsl(var(--accent-h) 100% 62% / 0.12);
+  }
+  .ctl svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .ctl-bg select {
+    height: 34px;
+    padding: 0 8px;
+    font: inherit;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    color: #bccbdb;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  .ctl-bg select option { background: #0d0c1d; color: #f4feff; }
+  .ctl:focus-visible,
+  .ctl-bg select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .vh {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
   @keyframes rise {
     from { opacity: 0; transform: translateY(18px); }
     to   { opacity: 1; transform: none; }
@@ -700,7 +1054,8 @@
   }
 
   @media (max-width: 700px) {
-    body.tracking { padding: 16px; }
+    body.tracking { padding: 16px 16px 72px; }
+    .controls { right: 10px; bottom: 10px; }
   }
 
   /* phones: two rows, days+hours / minutes+seconds */
@@ -718,7 +1073,7 @@
 </style>
 </head>
 <body>
-  <div class="scene" aria-hidden="true">
+  <div class="scene" id="sceneSynth" aria-hidden="true">
     <div class="sky">
       <div class="stars"></div>
       <div class="sun-glow" id="sunGlow"></div>
@@ -746,6 +1101,9 @@
       </div>
     </div>
 
+    <!-- The last ten seconds, one huge number at a time. -->
+    <div class="final" id="final" aria-hidden="true"></div>
+
     <p class="target" id="target"></p>
     <p class="target-flight" id="targetFlight" hidden></p>
 
@@ -759,6 +1117,10 @@
         <div class="fl-route" id="flRoute"></div>
       </div>
       <nav class="fl-legs" id="flLegs" aria-label="Flights in this trip" hidden></nav>
+      <div class="fl-arrive" id="flArrive" hidden>
+        <div class="fl-arrive-lbl" id="flArriveLbl"></div>
+        <div class="fl-arrive-clock" id="flArriveClock"></div>
+      </div>
       <div class="fl-progress" id="flProgress" hidden><i id="flBar"></i></div>
       <p class="fl-note" id="flNote" hidden></p>
 
@@ -770,15 +1132,49 @@
           <div class="fl-stat"><dt>Heading</dt><dd><span data-v="hdg">&mdash;</span><small data-s="hdg"></small></dd></div>
           <div class="fl-stat"><dt>To go</dt><dd><span data-v="dist">&mdash;</span><small data-s="dist"></small></dd></div>
           <div class="fl-stat wide"><dt>Arrival (est.)</dt><dd><span data-v="eta">&mdash;</span><small data-s="eta"></small></dd></div>
+          <div class="fl-stat wide"><dt>Nearest city</dt><dd><span data-v="near">&mdash;</span><small data-s="near"></small></dd></div>
           <div class="fl-stat wide"><dt>Aircraft</dt><dd><span data-v="ac">&mdash;</span><small data-s="ac"></small></dd></div>
         </dl>
+      </div>
+
+      <div class="fl-alt" id="flAlt">
+        <div class="fl-alt-head"><span>Altitude</span><b id="flAltNow"></b></div>
+        <svg id="flAltSvg" role="img" aria-label="Altitude over this flight" hidden></svg>
+        <p class="fl-alt-empty" id="flAltEmpty">The altitude line starts drawing once the plane is on ADS-B.</p>
+        <div class="fl-alt-tip" id="flAltTip" hidden></div>
       </div>
 
       <p class="fl-foot" id="flFoot"></p>
     </section>
   </div>
 
+  <div class="controls idle" id="controls">
+    <label class="ctl-bg"><span class="vh">Background</span><select id="bgPick"></select></label>
+    <button type="button" class="ctl" id="sndBtn" aria-pressed="false" title="Sound"></button>
+    <button type="button" class="ctl" id="bellBtn" aria-pressed="false" title="Flight alerts" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>
+    </button>
+    <button type="button" class="ctl" id="wakeBtn" aria-pressed="false" title="Keep the screen on" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4M12 8v4M10 10h4"/></svg>
+    </button>
+    <button type="button" class="ctl" id="fsBtn" aria-pressed="false" title="Full screen" hidden></button>
+  </div>
+
 <script>
+/* site/airports.json, fetched once on first use and shared: the tracker (manual
+   routes, nearest city) and the globe and departure-board backgrounds all read it. */
+window.Airports = (function () {
+  var p = null;
+  return {
+    load: function () {
+      return p || (p = fetch('airports.json').then(function (r) {
+        if (!r.ok) throw r.status;
+        return r.json();
+      }).catch(function (e) { p = null; throw e; }));
+    }
+  };
+})();
+
 /* Live flight tracker. Takes over the page at zero when a flight is configured
    (COUNTDOWN_FLIGHT, or ?flight= on the URL). Positions are public ADS-B data
    relayed by nginx (docker/default.conf); the map is Leaflet, fetched only once
@@ -875,12 +1271,21 @@ window.FlightTracker = (function () {
     return lon;
   }
 
+  // Initial bearing from a to b, degrees clockwise from north.
+  function bearing(a, b) {
+    var la1 = a.lat * RAD, la2 = b.lat * RAD, dLon = (b.lon - a.lon) * RAD;
+    var y = Math.sin(dLon) * Math.cos(la2);
+    var x = Math.cos(la1) * Math.sin(la2) - Math.sin(la1) * Math.cos(la2) * Math.cos(dLon);
+    return (Math.atan2(y, x) / RAD + 360) % 360;
+  }
+
   // ---- formatting ----
 
   var COMPASS = ['north', 'north-northeast', 'northeast', 'east-northeast', 'east',
                  'east-southeast', 'southeast', 'south-southeast', 'south',
                  'south-southwest', 'southwest', 'west-southwest', 'west',
                  'west-northwest', 'northwest', 'north-northwest'];
+  var COMPASS8 = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 
   function num(n) { return Math.round(n).toLocaleString('en-US'); }
   function pad2(n) { return n < 10 ? '0' + n : '' + n; }
@@ -916,6 +1321,7 @@ window.FlightTracker = (function () {
   var zone, el = {}, routeErr = '';
   var feed = '', feedErr = 0, inflight = false, timer = null, lastPoll = 0, skew = 0;
   var L, map, layers = { routes: [], trails: [] }, userMoved = false;
+  var listeners = [], places = null, nearCache = null, altKey = '';
 
   function newLeg(ident) {
     return {
@@ -926,7 +1332,10 @@ window.FlightTracker = (function () {
       hex: null,          // aircraft this leg is locked onto
       lastNow: 0,         // feed timestamp of the last response used
       airborneSeen: false,
-      trail: [],          // [lat, lon, t]
+      trail: [],          // [lat, lon, t, altitude ft]
+      fetched: false,     // has had at least one answer from the feed this visit
+      lastStatus: undefined,
+      etaRaw: null, etaSmooth: null,
       done: false
     };
   }
@@ -1007,7 +1416,7 @@ window.FlightTracker = (function () {
         skew = isNaN(served) ? 0 : served - Date.now();
         return r.json();
       })
-      .then(function (d) { if (main) feedErr = 0; onData(g, d); })
+      .then(function (d) { if (main) feedErr = 0; g.fetched = true; onData(g, d); })
       .catch(function (status) { if (main) feedErr = status === 404 ? 404 : (status || -1); });
   }
 
@@ -1055,7 +1464,7 @@ window.FlightTracker = (function () {
     var lastPt = g.trail[g.trail.length - 1];
     if (!lastPt || fix.t - lastPt[2] > 30000 ||
         distKm(fix, { lat: lastPt[0], lon: lastPt[1] }) > 0.5) {
-      g.trail.push([fix.lat, fix.lon, fix.t]);
+      g.trail.push([fix.lat, fix.lon, fix.t, isNum(fix.alt) ? Math.round(fix.alt) : null]);
       if (g.trail.length > 6000) g.trail.splice(0, g.trail.length - 6000);
     }
 
@@ -1139,8 +1548,7 @@ window.FlightTracker = (function () {
         : 'two airport codes like <code>SFO-ICN</code>') + ', not <code>' + esc(spec) + '</code>.';
       return;
     }
-    fetch('airports.json')
-      .then(function (r) { return r.json(); })
+    window.Airports.load()
       .then(function (db) {
         var bad = [];
         pairs.forEach(function (p) {
@@ -1218,6 +1626,53 @@ window.FlightTracker = (function () {
       return ['Signal lost', 'warn'];
     }
     return ['In flight', 'ok'];
+  }
+
+  // Estimated landing time of a leg in the air: great-circle distance left at
+  // the current ground speed, from its last fix. Null when there is none.
+  function etaFor(g) {
+    var fix = g.fix, rt = trustedRoute(g);
+    if (!rt || !fix || fix.ground || !isNum(fix.gs) || fix.gs * 1.852 <= 150) return null;
+    return fix.t + distKm(fix, rt.to) / (fix.gs * 1.852) * 3600e3;
+  }
+
+  // Status changes worth telling someone about, per leg, as they happen. The
+  // first status seen for a leg on this visit only sets a baseline, so a page
+  // opened mid-flight does not announce a takeoff from hours ago.
+  var GROUNDED = ['Waiting for signal', 'On the ground', 'Taxiing', 'Layover'];
+
+  function watch() {
+    legs.forEach(function (g, i) {
+      if (!g.fetched) return;
+      var s = status(g)[0], was = g.lastStatus;
+      g.lastStatus = s;
+      if (was === undefined || was === s) return;
+      var type = s === 'In flight' && GROUNDED.indexOf(was) >= 0 ? 'takeoff'
+               : s === 'Landed' ? 'landed'
+               : s.indexOf('Emergency') === 0 ? 'emergency' : null;
+      if (!type) return;
+      var eta = type === 'takeoff' ? etaFor(g) : null;
+      var e = {
+        type: type, leg: i, last: i === legs.length - 1, flight: g.ident.shown, status: s,
+        route: trustedRoute(g), eta: eta && clockTime(eta),
+        next: legs[i + 1] ? legs[i + 1].ident.shown : null
+      };
+      listeners.forEach(function (fn) { try { fn(e); } catch (err) {} });
+    });
+  }
+
+  // The closest town with an airport in site/airports.json - a rough "where is
+  // it now" that needs no geocoding service. Recomputed every couple of km.
+  function nearest(p) {
+    if (!places || !places.length) return null;
+    if (nearCache && distKm(p, nearCache.at) < 2) return nearCache;
+    var best = null, bd = Infinity;
+    for (var i = 0; i < places.length; i++) {
+      var d = distKm(p, places[i]);
+      if (d < bd) { bd = d; best = places[i]; }
+    }
+    return (nearCache = { at: { lat: p.lat, lon: p.lon }, place: best, km: bd,
+                          dir: COMPASS8[Math.round(bearing(best, p) / 45) % 8] });
   }
 
   // ---- rendering ----
@@ -1355,6 +1810,20 @@ window.FlightTracker = (function () {
       stat('ac', '—', '');
     }
 
+    var near = fix && nearest(position(g) || fix);
+    if (near) {
+      var mi = near.km * 0.621371;
+      stat('near', near.place.city, near.place.code + ' · ' +
+           (mi < 8 ? 'right overhead' : num(mi) + ' mi ' + near.dir + ' of town'));
+    } else {
+      stat('near', '—', !fix ? '' : places ? 'airport list unavailable' : 'looking up places');
+    }
+
+    setText(el.altNow, !fix ? '' : fix.ground ? 'on the ground'
+                       : isNum(fix.alt) ? num(fix.alt) + ' ft' : '');
+    drawAlt(g);
+    watch();
+
     var foot = [];
     if (fix) foot.push('Position ' + ago(age) + ' old');
     if (ac && ac.squawk) foot.push('squawk ' + esc(ac.squawk));
@@ -1371,6 +1840,100 @@ window.FlightTracker = (function () {
     if (document.title !== title) document.title = title;
 
     drawPlane();
+  }
+
+  function shortTime(ms) {
+    var o = { hour: 'numeric', minute: '2-digit' };
+    if (zone) o.timeZone = zone;
+    try { return new Date(ms).toLocaleTimeString(undefined, o); }
+    catch (e) { return new Date(ms).toLocaleTimeString(); }
+  }
+
+  // ---- altitude chart ----
+
+  // Altitude over the leg on screen: climb, cruise, descent. Redrawn only when
+  // its trail grows, another leg is picked or the panel changes width. A gap of
+  // more than ten minutes (out of coverage) is left as a gap, not bridged.
+  var ALT_H = 130, ALT_TOP = 14, ALT_BOT = 16;
+
+  function drawAlt(g) {
+    var pts = g.trail.filter(function (p) { return isNum(p[3]); });
+    var w = Math.round(el.altSvg.getBoundingClientRect().width || el.alt.clientWidth || 600);
+    var key = view + ':' + pts.length + ':' + w;
+    if (key === altKey) return;
+    altKey = key;
+    el.altTip.hidden = true;
+    if (pts.length < 2) {
+      el.altPts = null;
+      el.altSvg.setAttribute('hidden', '');
+      el.altEmpty.hidden = false;
+      return;
+    }
+    el.altSvg.removeAttribute('hidden');   // (an <svg> has no .hidden property)
+    el.altEmpty.hidden = true;
+
+    var t0 = pts[0][2], t1 = pts[pts.length - 1][2], top = 0;
+    pts.forEach(function (p) { if (p[3] > top) top = p[3]; });
+    top = Math.max(10000, Math.ceil(top / 10000) * 10000);
+    var X = function (t) { return t1 > t0 ? (t - t0) / (t1 - t0) * w : 0; };
+    var Y = function (a) { return ALT_TOP + (1 - Math.max(0, a) / top) * (ALT_H - ALT_TOP - ALT_BOT); };
+    var base = Y(0).toFixed(1), line = '', area = '', run = [];
+    function flush() {
+      if (run.length > 1) {
+        line += 'M' + run.join('L');
+        area += 'M' + run[0][0] + ',' + base + 'L' + run.join('L') + 'L' + run[run.length - 1][0] + ',' + base + 'Z';
+      }
+      run = [];
+    }
+    pts.forEach(function (p, i) {
+      if (i && p[2] - pts[i - 1][2] > 10 * 60e3) flush();
+      run.push([X(p[2]).toFixed(1), Y(p[3]).toFixed(1)]);
+    });
+    flush();
+
+    var grid = [top, top / 2, 0].map(function (a) {
+      var y = Y(a).toFixed(1);
+      return '<line class="gl" x1="0" x2="' + w + '" y1="' + y + '" y2="' + y + '"/>' +
+             (a ? '<text class="ax" x="0" y="' + (y - 4) + '">' + num(a) + ' ft</text>' : '');
+    }).join('');
+    var times = '<text class="ax" x="0" y="' + (ALT_H - 2) + '">' + esc(shortTime(t0)) + '</text>' +
+                '<text class="ax" x="' + w + '" y="' + (ALT_H - 2) + '" text-anchor="end">' + esc(shortTime(t1)) + '</text>';
+    el.altSvg.setAttribute('viewBox', '0 0 ' + w + ' ' + ALT_H);
+    el.altSvg.setAttribute('aria-label', 'Altitude from ' + shortTime(t0) + ' to ' + shortTime(t1) +
+                           ', highest ' + num(Math.max.apply(null, pts.map(function (p) { return p[3]; }))) + ' ft');
+    el.altSvg.innerHTML = grid + times + '<path class="ar" d="' + area + '"/><path class="ln" d="' + line + '"/>' +
+      '<g class="hov" style="display:none"><line class="xh" y1="' + ALT_TOP + '" y2="' + base + '"/><circle class="dot" r="4"/></g>';
+    el.altPts = pts;
+    el.altX = X; el.altY = Y; el.altW = w;
+    if (el.altHov) altHover(el.altHov);   // a reading arrived under a resting pointer
+  }
+
+  // Crosshair and tooltip on the nearest reading to the pointer.
+  function altHover(e) {
+    var pts = el.altPts;
+    el.altHov = { clientX: e.clientX };
+    if (!pts) return;
+    var r = el.altSvg.getBoundingClientRect(), box = el.alt.getBoundingClientRect();
+    var x = (e.clientX - r.left) / r.width * el.altW, best = pts[0], bd = Infinity;
+    pts.forEach(function (p) { var d = Math.abs(el.altX(p[2]) - x); if (d < bd) { bd = d; best = p; } });
+    var px = el.altX(best[2]), py = el.altY(best[3]);
+    var hov = el.altSvg.querySelector('.hov');
+    hov.style.display = '';
+    var xh = hov.firstChild, dot = hov.lastChild;
+    xh.setAttribute('x1', px); xh.setAttribute('x2', px);
+    dot.setAttribute('cx', px); dot.setAttribute('cy', py);
+    el.altTip.textContent = (best[3] > 0 ? num(best[3]) + ' ft' : 'Ground') + ' · ' + shortTime(best[2]);
+    el.altTip.hidden = false;
+    var left = r.left - box.left + px / el.altW * r.width;
+    el.altTip.style.left = Math.max(70, Math.min(box.width - 70, left)) + 'px';
+    el.altTip.style.top = (r.top - box.top + py / ALT_H * r.height - 10) + 'px';
+  }
+
+  function altLeave() {
+    el.altHov = null;
+    el.altTip.hidden = true;
+    var hov = el.altSvg.querySelector('.hov');
+    if (hov) hov.style.display = 'none';
   }
 
   function clockTime(ms) {
@@ -1554,10 +2117,39 @@ window.FlightTracker = (function () {
   // ---- entry points ----
 
   return {
+    // The flights as written on a ticket ("AS 414"), or null if invalid.
+    legsOf: function (raw) {
+      var ids = parseTrip(raw);
+      return ids && ids.map(function (id) { return id.shown; });
+    },
+
     // What the countdown shows under the clock before zero, or null if invalid.
     describe: function (raw) {
-      var ids = parseTrip(raw);
-      return ids && ids.map(function (id) { return id.shown; }).join(' → ');
+      var shown = this.legsOf(raw);
+      return shown && shown.join(' → ');
+    },
+
+    // fn({type: 'takeoff' | 'landed' | 'emergency', leg, last, flight, route, eta, next})
+    on: function (fn) { listeners.push(fn); },
+
+    // Status text of every leg, for the departure board.
+    statuses: function () { return legs.map(function (g) { return status(g)[0]; }); },
+
+    // The landing the page counts down to after zero: the leg in progress, while
+    // it is in the air. Each new fix nudges the estimate rather than jumping it,
+    // so the digits do not lurch by a minute every five seconds.
+    arrival: function () {
+      var g = legs[cur];
+      if (!g) return null;
+      var st = status(g)[0];
+      var raw = st === 'In flight' || st === 'Signal lost' ? etaFor(g) : null;
+      if (raw === null) { g.etaSmooth = g.etaRaw = null; return null; }
+      if (g.etaSmooth === null || Math.abs(raw - g.etaSmooth) > 20 * 60e3) g.etaSmooth = raw;
+      else if (raw !== g.etaRaw) g.etaSmooth += (raw - g.etaSmooth) * 0.25;
+      g.etaRaw = raw;
+      var to = trustedRoute(g).to;
+      return { eta: g.etaSmooth, leg: cur, legs: legs.length, last: cur === legs.length - 1,
+               city: to.city, code: to.code };
     },
 
     start: function (raw, opts) {
@@ -1576,6 +2168,11 @@ window.FlightTracker = (function () {
       el.note = document.getElementById('flNote');
       el.map = document.getElementById('flMap');
       el.foot = document.getElementById('flFoot');
+      el.alt = document.getElementById('flAlt');
+      el.altSvg = document.getElementById('flAltSvg');
+      el.altNow = document.getElementById('flAltNow');
+      el.altEmpty = document.getElementById('flAltEmpty');
+      el.altTip = document.getElementById('flAltTip');
       el.v = {}; el.s = {};
       var vs = el.section.querySelectorAll('[data-v]');
       for (var i = 0; i < vs.length; i++) {
@@ -1592,6 +2189,17 @@ window.FlightTracker = (function () {
         if (b) selectLeg(+b.getAttribute('data-leg'));
       });
 
+      el.altSvg.addEventListener('pointermove', altHover);
+      el.altSvg.addEventListener('pointerdown', altHover);
+      el.altSvg.addEventListener('pointerleave', altLeave);
+      window.addEventListener('resize', function () { altKey = ''; });
+
+      window.Airports.load().then(function (db) {
+        places = Object.keys(db).map(function (c) {
+          return { code: c, lat: db[c][0], lon: db[c][1], city: db[c][2] };
+        });
+      }).catch(function () { places = []; });
+
       restore();
       if (opts && opts.route) manualRoutes(opts.route);
       else legs.forEach(function (g) { if (g.ident.kind === 'callsign') fetchRoute(g, g.ident.id); });
@@ -1604,6 +2212,1113 @@ window.FlightTracker = (function () {
         if (!document.hidden && Date.now() - lastPoll > POLL_MS) cycle();
       });
       return true;
+    }
+  };
+})();
+</script>
+
+<script>
+/* Backgrounds. Each one is driven once a frame by the countdown with the same
+   signals: S.beat (a hit on every whole second), S.speed (the ramp, px/s, ~18 a
+   week out to ~900 at the end), S.urgency (0 a day out, 1 at zero) and S.hue,
+   plus S.px / S.py (pointer or tilt, -1..1) for parallax. Each may also take
+   poke(x, y) for a tap, drag(dx, dy, end) for a drag, zero() for the moment
+   itself, resize() and stop(). Picked by COUNTDOWN_BG, ?bg= or the picker. */
+window.Scenes = (function () {
+  var LIST = [
+    ['synthwave', 'Synthwave'],
+    ['hyperspace', 'Hyperspace'],
+    ['globe', 'Globe'],
+    ['board', 'Departure board'],
+    ['aurora', 'Northern lights']
+  ];
+  var RAD = Math.PI / 180;
+  var make = {};
+
+  function layer(cls) {
+    var d = document.createElement('div');
+    d.className = 'scene ' + cls;
+    d.setAttribute('aria-hidden', 'true');
+    document.body.insertBefore(d, document.body.firstChild);
+    return d;
+  }
+
+  function add(host, cls) {
+    var d = document.createElement('div');
+    d.className = cls;
+    host.appendChild(d);
+    return d;
+  }
+
+  // A canvas filling the scene at `k` canvas pixels per CSS pixel (default:
+  // the device's, capped at 2).
+  function canvas(host, fixedK) {
+    var c = document.createElement('canvas');
+    host.appendChild(c);
+    var o = { c: c, ctx: c.getContext('2d'), w: 0, h: 0, k: 1 };
+    o.fit = function () {
+      o.k = fixedK || Math.min(2, window.devicePixelRatio || 1);
+      var w = Math.max(1, Math.round(innerWidth * o.k)), h = Math.max(1, Math.round(innerHeight * o.k));
+      if (w !== o.w || h !== o.h) { c.width = o.w = w; c.height = o.h = h; }
+    };
+    o.fit();
+    return o;
+  }
+
+  function hsla(h, s, l, a) { return 'hsla(' + h.toFixed(1) + ',' + s + '%,' + l + '%,' + a.toFixed(3) + ')'; }
+  function ease(f) { return f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2; }
+
+  // Route codes from COUNTDOWN_ROUTE, in order, consecutive repeats dropped:
+  // "PIT-SEA, SEA-PDX" and "PIT-SEA-PDX" are both [PIT, SEA, PDX].
+  function routeCodes(spec) {
+    var out = [];
+    (String(spec || '').toUpperCase().match(/\b[A-Z]{3}\b/g) || []).forEach(function (c) {
+      if (c !== 'TO' && out[out.length - 1] !== c) out.push(c);
+    });
+    return out;
+  }
+
+  // ---------- synthwave: the original CSS scene, already in the page ----------
+
+  make.synthwave = function () {
+    var host = document.getElementById('sceneSynth');
+    var sky = host.querySelector('.sky'), stars = host.querySelector('.stars'), sun = host.querySelector('.sun');
+    var glow = document.getElementById('sunGlow'), horizon = document.getElementById('horizon');
+    var grid = document.getElementById('grid');
+    var TILE = 72;   // grid tile size, must match the CSS gradients
+    var TILT = 80;   // floor rake, must match the CSS transform
+    var offset = 0, kick = 0, lit = true;
+    host.hidden = false;
+
+    return {
+      frame: function (S) {
+        if (!S.reduce) {
+          // grid scroll - transform only, so it stays on the compositor
+          offset = (offset + S.speed * S.dt) % TILE;
+          grid.style.transform = 'rotateX(' + TILT + 'deg) translate3d(' +
+            (S.px * -40).toFixed(1) + 'px,' + offset.toFixed(2) + 'px,0)';
+          var t = (S.px * -18).toFixed(1) + 'px ' + (S.py * -8).toFixed(1) + 'px';
+          sun.style.translate = t;
+          glow.style.translate = t;
+          stars.style.translate = (S.px * -7).toFixed(1) + 'px ' + (S.py * -4).toFixed(1) + 'px';
+        }
+        // beat: the horizon and the sun's bloom pulse; a tap adds a flash of its own
+        kick = Math.max(0, kick - S.dt * 2.5);
+        var beat = Math.max(S.beat, kick);
+        if (beat > 0 || lit) {
+          lit = beat > 0;
+          glow.style.opacity = (0.32 + 0.5 * beat).toFixed(3);
+          horizon.style.opacity = (0.72 + 0.28 * beat).toFixed(3);
+          horizon.style.transform = 'scaleY(' + (1 + 2.4 * beat).toFixed(3) + ')';
+        }
+      },
+
+      // A shooting star from the tap (or above it, for a tap on the floor).
+      poke: function (x, y) {
+        kick = 0.8;
+        var r = sky.getBoundingClientRect();
+        if (y > r.bottom - 30) y = r.top + r.height * (0.15 + Math.random() * 0.4);
+        var s = document.createElement('i');
+        s.className = 'shoot';
+        s.style.left = (x - r.left) + 'px';
+        s.style.top = (y - r.top) + 'px';
+        sky.appendChild(s);
+        if (!s.animate) { s.remove(); return; }
+        var ang = 140 + Math.random() * 25, d = 260 + Math.random() * 220;
+        var dx = Math.cos(ang * RAD) * d, dy = Math.sin(ang * RAD) * d, rot = ' rotate(' + ang + 'deg)';
+        s.animate([
+          { transform: 'translate(0,0)' + rot + ' scaleX(0.1)', opacity: 0 },
+          { transform: 'translate(' + dx * 0.2 + 'px,' + dy * 0.2 + 'px)' + rot + ' scaleX(1)', opacity: 1, offset: 0.2 },
+          { transform: 'translate(' + dx + 'px,' + dy + 'px)' + rot + ' scaleX(0.5)', opacity: 0 }
+        ], { duration: 900, easing: 'ease-in' }).onfinish = function () { s.remove(); };
+      },
+
+      // The sun flares, the horizon blows out, then both settle.
+      zero: function () {
+        if (!glow.animate) return;
+        glow.animate([{ opacity: 1, scale: '1' }, { opacity: 1, scale: '1.9', offset: 0.25 },
+                      { opacity: 0.32, scale: '1' }], { duration: 3200, easing: 'ease-out' });
+        sun.animate([{ filter: 'none' }, { filter: 'brightness(1.7) saturate(1.3)', offset: 0.2 },
+                     { filter: 'none' }], { duration: 3200 });
+        horizon.animate([{ transform: 'scaleY(7)', opacity: 1 }, { transform: 'scaleY(1)', opacity: 0.72 }],
+                        { duration: 1800, easing: 'ease-out' });
+      },
+
+      stop: function () {
+        host.hidden = true;
+        [grid, sun, glow, stars, horizon].forEach(function (n) { n.removeAttribute('style'); });
+      }
+    };
+  };
+
+  // ---------- hyperspace: a starfield that ends in light-speed streaks ----------
+
+  make.hyperspace = function () {
+    var host = layer('bg-hyperspace');
+    var cv = canvas(host);
+    add(host, 'scrim');
+    var stars = [], sparks = [], vel = 0.05, boost = 0;
+
+    function spawn(s, z) {
+      s.x = (Math.random() * 2 - 1) * 1.1;
+      s.y = (Math.random() * 2 - 1) * 1.1;
+      s.z = z;
+      s.tint = Math.random();
+      return s;
+    }
+    for (var i = 0; i < 650; i++) stars.push(spawn({}, 0.05 + Math.random() * 0.95));
+
+    return {
+      frame: function (S) {
+        var ctx = cv.ctx, w = cv.w, h = cv.h, k = cv.k;
+        // depth units per second: a slow drift weeks out, a blur at the end
+        var want = S.reduce ? 0 : S.live ? 0.03 + Math.pow(S.speed / 900, 1.15) * 2.4 : 0.03;
+        vel += (want - vel) * Math.min(1, S.dt * (vel > want ? 0.8 : 3));
+        boost = Math.max(0, boost - S.dt * 1.4);
+        var v = vel + boost;
+        var cx = w / 2 - S.px * w * 0.06, cy = h / 2 - S.py * h * 0.06, f = Math.max(w, h) * 0.5;
+
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.clearRect(0, 0, w, h);
+        var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, f * 0.9);
+        g.addColorStop(0, hsla(S.hue, 100, 60, 0.1 + 0.16 * S.beat));
+        g.addColorStop(0.45, hsla((S.hue + 60) % 360, 100, 50, 0.04));
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.lineCap = 'round';
+        var tail = Math.min(0.35, v * 0.07);
+        for (var i = 0; i < stars.length; i++) {
+          var s = stars[i];
+          s.z -= v * S.dt;
+          if (s.z <= 0.02) spawn(s, 1);
+          var sx = cx + s.x / s.z * f, sy = cy + s.y / s.z * f;
+          if (sx < -40 || sx > w + 40 || sy < -40 || sy > h + 40) { spawn(s, 1); continue; }
+          var tz = s.z + tail, near = 1 - s.z;
+          var a = Math.min(1, near * near * 1.6 + 0.08);
+          ctx.strokeStyle = s.tint < 0.7 ? 'rgba(235,245,255,' + a.toFixed(3) + ')'
+                          : hsla(s.tint < 0.85 ? S.hue : 320, 100, 75, a);
+          ctx.lineWidth = (0.6 + near * 2.2) * k;
+          ctx.beginPath();
+          ctx.moveTo(cx + s.x / tz * f, cy + s.y / tz * f);
+          ctx.lineTo(sx + 0.01, sy);
+          ctx.stroke();
+        }
+
+        for (i = sparks.length - 1; i >= 0; i--) {
+          var p = sparks[i];
+          p.life -= S.dt * 1.3;
+          if (p.life <= 0) { sparks.splice(i, 1); continue; }
+          p.x += p.vx * S.dt; p.y += p.vy * S.dt;
+          ctx.strokeStyle = hsla(p.hue, 100, 75, p.life);
+          ctx.lineWidth = 1.6 * k;
+          ctx.beginPath();
+          ctx.moveTo(p.x - p.vx * 0.04, p.y - p.vy * 0.04);
+          ctx.lineTo(p.x, p.y);
+          ctx.stroke();
+        }
+      },
+
+      // A burst of sparks from the tap, and a jolt forward.
+      poke: function (x, y) {
+        boost = Math.min(2.5, boost + 1.2);
+        for (var i = 0; i < 36; i++) {
+          var a = Math.random() * Math.PI * 2, sp = (120 + Math.random() * 380) * cv.k;
+          sparks.push({ x: x * cv.k, y: y * cv.k, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 1,
+                        hue: Math.random() < 0.5 ? 186 : 320 });
+        }
+      },
+
+      // One last surge, then out of warp: the streaks shrink back to stars.
+      zero: function () { boost = 4; },
+
+      resize: function () { cv.fit(); },
+      stop: function () { host.remove(); }
+    };
+  };
+
+  // ---------- globe: Earth turning, with the trip drawn on it ----------
+
+  // Land outlines: world-atlas (Natural Earth, public domain), 110m, ~55 KB.
+  var LAND = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/land-110m.json';
+
+  function vec(lon, lat) {
+    var a = lon * RAD, b = lat * RAD;
+    return [Math.cos(b) * Math.cos(a), Math.cos(b) * Math.sin(a), Math.sin(b)];
+  }
+
+  // TopoJSON -> rings of unit vectors. Just enough of the format for one file:
+  // quantized, delta-encoded arcs, and Polygon / MultiPolygon geometries.
+  function decodeLand(topo) {
+    var tf = topo.transform;
+    var arcs = topo.arcs.map(function (arc) {
+      var x = 0, y = 0;
+      return arc.map(function (p) {
+        if (!tf) return [p[0], p[1]];
+        x += p[0]; y += p[1];
+        return [x * tf.scale[0] + tf.translate[0], y * tf.scale[1] + tf.translate[1]];
+      });
+    });
+    var rings = [];
+    topo.objects.land.geometries.forEach(function (g) {
+      var polys = g.type === 'Polygon' ? [g.arcs] : g.type === 'MultiPolygon' ? g.arcs : [];
+      polys.forEach(function (poly) {
+        poly.forEach(function (ring) {
+          var pts = [];
+          ring.forEach(function (i) {
+            var a = i < 0 ? arcs[~i].slice().reverse() : arcs[i];
+            pts = pts.concat(pts.length ? a.slice(1) : a);
+          });
+          rings.push(pts.map(function (p) { return vec(p[0], p[1]); }));
+        });
+      });
+    });
+    return rings;
+  }
+
+  make.globe = function (info) {
+    var host = layer('bg-globe');
+    add(host, 'stars');
+    var cv = canvas(host);
+    add(host, 'scrim');
+
+    var land = [], grat = [], arcs = [], ports = [], pings = [];
+    // Start facing the viewer's side of the world, roughly, from their UTC offset.
+    var lon0 = -new Date().getTimezoneOffset() / 4, lat0 = 22, spin = 0, lastDx = 0;
+    var zoom = 1, zoomFrom = null, zoomT = 0, t = 0, R = 1, cx = 0, cy = 0;
+
+    var lo, la, line;
+    for (lo = -180; lo < 180; lo += 30) {
+      line = [];
+      for (la = -90; la <= 90; la += 3) line.push(vec(lo, la));
+      grat.push(line);
+    }
+    for (la = -60; la <= 60; la += 30) {
+      line = [];
+      for (lo = -180; lo <= 180; lo += 3) line.push(vec(lo, la));
+      grat.push(line);
+    }
+
+    fetch(LAND).then(function (r) { return r.json(); })
+      .then(function (topo) { land = decodeLand(topo); })
+      .catch(function () {});   // no outlines: the graticule and route still draw
+
+    var codes = routeCodes(info.route);
+    if (codes.length > 1) {
+      window.Airports.load().then(function (db) {
+        codes.forEach(function (c) {
+          if (db[c]) ports.push({ code: c, lon: db[c][1], lat: db[c][0], v: vec(db[c][1], db[c][0]) });
+        });
+        // Each leg arcs up off the surface, higher for a longer hop.
+        for (var i = 1; i < ports.length; i++) {
+          var a = ports[i - 1].v, b = ports[i].v;
+          var om = Math.acos(Math.max(-1, Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2])));
+          var arc = [];
+          for (var j = 0; j <= 48; j++) {
+            var f = j / 48, s = om < 1e-6 ? 0 : 1 / Math.sin(om);
+            var A = om < 1e-6 ? 1 - f : Math.sin((1 - f) * om) * s, B = om < 1e-6 ? f : Math.sin(f * om) * s;
+            var lift = 1 + Math.min(0.12, om * 0.25) * Math.sin(Math.PI * f);
+            arc.push([(A * a[0] + B * b[0]) * lift, (A * a[1] + B * b[1]) * lift, (A * a[2] + B * b[2]) * lift]);
+          }
+          arcs.push(arc);
+        }
+        if (ports.length) {
+          var mid = ports.reduce(function (s, p) { return s + p.lon; }, 0) / ports.length;
+          if (!zoomFrom) lon0 = mid;
+        }
+      }).catch(function () {});
+    }
+
+    // Orthographic projection: [screen x, screen y, depth]. Depth >= 0 faces us.
+    var cl, sl, cp, sp;
+    function P(v) {
+      var a = v[0] * cl + v[1] * sl, b = v[1] * cl - v[0] * sl;
+      return [cx + R * b, cy - R * (cp * v[2] - sp * a), sp * v[2] + cp * a];
+    }
+    function seen(q, lifted) {
+      return q[2] >= 0 || (lifted && (q[0] - cx) * (q[0] - cx) + (q[1] - cy) * (q[1] - cy) > R * R);
+    }
+
+    // Polylines in two passes: the far side faint, the near side bright.
+    function lines(ctx, list, back, front, width, lifted) {
+      ctx.lineWidth = width;
+      [[back, false], [front, true]].forEach(function (pass) {
+        if (!pass[0]) return;
+        ctx.strokeStyle = pass[0];
+        ctx.beginPath();
+        list.forEach(function (l) {
+          var pen = false;
+          for (var i = 0; i < l.length; i++) {
+            var q = P(l[i]);
+            if (seen(q, lifted) === pass[1]) {
+              if (pen) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]);
+              pen = true;
+            } else {
+              pen = false;
+            }
+          }
+        });
+        ctx.stroke();
+      });
+    }
+
+    return {
+      frame: function (S) {
+        var ctx = cv.ctx, w = cv.w, h = cv.h, k = cv.k;
+        t += S.dt;
+        if (zoomFrom) {
+          // zero: swing round to the start of the trip and dive in
+          zoomT = Math.min(1, zoomT + S.dt / 2.6);
+          var e = ease(zoomT), d = ((zoomFrom.to - zoomFrom.lon + 540) % 360) - 180;
+          lon0 = zoomFrom.lon + d * e;
+          lat0 = zoomFrom.lat + (zoomFrom.toLat - zoomFrom.lat) * e;
+          zoom = 1 + 3.5 * e * e;
+        } else if (!S.reduce) {
+          lon0 -= (S.live ? 3 + (S.speed / 900) * 70 : 2) * S.dt;
+        }
+        lon0 -= spin * S.dt;
+        lon0 = ((lon0 + 180) % 360 + 360) % 360 - 180;
+        spin *= Math.exp(-S.dt * 1.5);
+
+        R = Math.min(w, h) * 0.36 * zoom;
+        cx = w / 2 - S.px * w * 0.015;
+        cy = h / 2 - S.py * h * 0.015;
+        var tilt = Math.max(-80, Math.min(80, lat0 + S.py * 6));
+        cl = Math.cos(lon0 * RAD); sl = Math.sin(lon0 * RAD);
+        cp = Math.cos(tilt * RAD); sp = Math.sin(tilt * RAD);
+
+        ctx.clearRect(0, 0, w, h);
+        // atmosphere, then the ocean disc
+        var g = ctx.createRadialGradient(cx, cy, R * 0.95, cx, cy, R * 1.2);
+        g.addColorStop(0, hsla(S.hue, 100, 62, 0.32 + 0.35 * S.beat));
+        g.addColorStop(1, hsla(S.hue, 100, 62, 0));
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(cx, cy, R * 1.2, 0, Math.PI * 2); ctx.fill();
+        g = ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.35, R * 0.1, cx, cy, R);
+        g.addColorStop(0, hsla(S.hue, 70, 16, 0.95));
+        g.addColorStop(1, 'rgba(5,5,18,0.97)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill();
+
+        ctx.lineJoin = 'round';
+        lines(ctx, grat, hsla(S.hue, 100, 70, 0.04), hsla(S.hue, 100, 70, 0.13), 1 * k);
+        lines(ctx, land, hsla(S.hue, 100, 70, 0.07), hsla(S.hue, 100, 72, 0.85), 1.3 * k);
+        lines(ctx, arcs, null, hsla(320, 100, 70, 0.9), 2.2 * k, true);
+
+        // a comet running the whole trip, over and over
+        var pts = [].concat.apply([], arcs);
+        if (pts.length) {
+          var q = P(pts[Math.floor((t * 0.18 % 1) * pts.length)]);
+          if (seen(q, true)) {
+            ctx.fillStyle = '#fff';
+            ctx.shadowColor = hsla(320, 100, 70, 1);
+            ctx.shadowBlur = 14 * k;
+            ctx.beginPath(); ctx.arc(q[0], q[1], 3 * k, 0, Math.PI * 2); ctx.fill();
+            ctx.shadowBlur = 0;
+          }
+        }
+
+        ctx.font = '700 ' + (11 * k) + 'px ui-monospace, Consolas, monospace';
+        ctx.textAlign = 'left';
+        ports.forEach(function (p) {
+          var q = P(p.v);
+          if (q[2] < 0) return;
+          ctx.fillStyle = '#fff';
+          ctx.beginPath(); ctx.arc(q[0], q[1], 3 * k, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = hsla(S.hue, 100, 70, 0.3 + 0.6 * S.beat);
+          ctx.lineWidth = 1.5 * k;
+          ctx.beginPath(); ctx.arc(q[0], q[1], (6 + 6 * S.beat) * k, 0, Math.PI * 2); ctx.stroke();
+          ctx.fillStyle = 'rgba(255,255,255,0.85)';
+          ctx.fillText(p.code, q[0] + 9 * k, q[1] - 7 * k);
+        });
+
+        for (var i = pings.length - 1; i >= 0; i--) {
+          var p = pings[i];
+          p.t += S.dt * 0.8;
+          if (p.t >= 1) { pings.splice(i, 1); continue; }
+          var pq = P(p.v);
+          if (pq[2] < 0) continue;
+          ctx.strokeStyle = hsla(S.hue, 100, 75, 1 - p.t);
+          ctx.lineWidth = 2 * k;
+          ctx.beginPath(); ctx.arc(pq[0], pq[1], (4 + p.t * 60) * k, 0, Math.PI * 2); ctx.stroke();
+        }
+      },
+
+      // On the globe: a ping where you tapped. Off it: a flick of spin.
+      poke: function (x, y) {
+        var X = (x * cv.k - cx) / R, Y = (cy - y * cv.k) / R, r2 = X * X + Y * Y;
+        if (r2 > 1) { spin += (x * cv.k < cx ? -1 : 1) * 60; return; }
+        var dep = Math.sqrt(1 - r2);
+        var z = cp * Y + sp * dep, a = cp * dep - sp * Y;
+        pings.push({ v: [a * cl - X * sl, a * sl + X * cl, z], t: 0 });
+      },
+
+      // Drag to turn it; let go and it coasts.
+      drag: function (dx, dy, end) {
+        if (zoomFrom) return;
+        if (end) { spin = Math.max(-150, Math.min(150, lastDx * cv.k / R / RAD * 30)); return; }
+        spin = 0;
+        lastDx = dx;
+        lon0 -= dx * cv.k / R / RAD;
+        lat0 = Math.max(-70, Math.min(70, lat0 + dy * cv.k / R / RAD));
+      },
+
+      zero: function () {
+        var o = ports[0];
+        zoomFrom = { lon: lon0, lat: lat0, to: o ? o.lon : lon0, toLat: o ? o.lat : lat0 };
+        spin = 0;
+      },
+
+      resize: function () { cv.fit(); },
+      stop: function () { host.remove(); }
+    };
+  };
+
+  // ---------- departure board: split-flap rows, your flight on top ----------
+
+  var FLAP = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:.-';
+  var AIRLINES = ['AA', 'UA', 'DL', 'AS', 'WN', 'B6', 'BA', 'LH', 'AF', 'KL', 'NH', 'JL', 'QF', 'AC',
+                  'EK', 'SQ', 'CX', 'KE', 'HA', 'VS'];
+  var CITIES = ['ANCHORAGE', 'ATLANTA', 'AUSTIN', 'BOSTON', 'CHICAGO', 'DALLAS', 'DENVER', 'DUBLIN',
+                'FRANKFURT', 'HONOLULU', 'HONG KONG', 'LAS VEGAS', 'LONDON', 'LOS ANGELES', 'MEXICO CITY',
+                'MIAMI', 'MINNEAPOLIS', 'NEW YORK JFK', 'ORLANDO', 'PARIS', 'PHOENIX', 'REYKJAVIK',
+                'SAN DIEGO', 'SAN FRANCISCO', 'SEATTLE', 'SEOUL', 'SINGAPORE', 'SYDNEY', 'TOKYO',
+                'TORONTO', 'VANCOUVER'];
+  var REMARK_CLASS = {
+    'ON TIME': 'r-ok', 'LANDED': 'r-ok', 'ARRIVED': 'r-ok', 'DELAYED': 'r-warn', 'LAYOVER': 'r-warn',
+    'CANCELLED': 'r-bad', 'EMERGENCY': 'r-bad', 'BOARDING': 'r-hot', 'FINAL CALL': 'r-hot',
+    'DEPARTED': 'r-hot', 'IN FLIGHT': 'r-hot', 'TAXIING': 'r-hot', 'SIGNAL LOST': 'r-warn'
+  };
+
+  function pick(list) { return list[Math.floor(Math.random() * list.length)]; }
+
+  make.board = function (info) {
+    var host = layer('bg-board');
+    var board = add(host, 'board');
+    add(host, 'scrim');
+
+    var hhmm;
+    try {
+      hhmm = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit',
+                                                hour12: false, timeZone: info.zone || undefined });
+    } catch (e) {
+      hhmm = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    }
+    function clock(ms) { return hhmm.format(new Date(ms)).slice(0, 8); }
+
+    var codes = routeCodes(info.route), cityOf = {};
+    window.Airports.load().then(function (db) {
+      codes.forEach(function (c) { if (db[c]) cityOf[c] = db[c][2].toUpperCase(); });
+    }).catch(function () {});
+
+    var fields, rows = [], fillers = [], flipping = [], head = null;
+    var acc = 0, wait = 4, lastSec = '', tiltX = 99, tiltY = 99;
+    var hlCount = info.flights ? info.flights.length : 1;
+
+    // One field of `n` tiles; returns its cells to be set later.
+    function field(row, n, cls) {
+      var f = document.createElement('span');
+      f.className = 'bfld' + (cls ? ' ' + cls : '');
+      var cells = [];
+      for (var i = 0; i < n; i++) {
+        var c = document.createElement('span');
+        c.className = 'ch';
+        c.textContent = ' ';
+        f.appendChild(c);
+        cells.push({ el: c, ch: ' ' });
+      }
+      row.appendChild(f);
+      return { el: f, cells: cells, n: n };
+    }
+
+    function write(fld, text, flip, slow) {
+      text = String(text).toUpperCase();
+      text = (text + new Array(fld.n + 1).join(' ')).slice(0, fld.n);
+      for (var i = 0; i < fld.n; i++) {
+        var c = fld.cells[i], ch = text.charAt(i);
+        if (c.ch === ch && !slow) continue;
+        c.ch = ch;
+        if (!flip) { c.el.textContent = ch; continue; }
+        if (c.steps === undefined || c.steps <= 0) flipping.push(c);
+        c.steps = (slow ? 8 : 3) + Math.floor(Math.random() * (slow ? 14 : 8));
+      }
+    }
+
+    function filler(at) {
+      var r = Math.random();
+      return {
+        time: at,
+        flight: pick(AIRLINES) + ' ' + (10 + Math.floor(Math.random() * 2980)),
+        dest: pick(CITIES),
+        gate: String.fromCharCode(65 + Math.floor(Math.random() * 5)) + (1 + Math.floor(Math.random() * 38)),
+        remark: r < 0.06 ? 'CANCELLED' : r < 0.22 ? 'DELAYED' : 'ON TIME'
+      };
+    }
+
+    function refill() {
+      fillers = [];
+      var at = Date.now() + 4 * 60e3;
+      for (var i = 0; i < 24; i++) { at += (3 + Math.random() * 9) * 60e3; fillers.push(filler(at)); }
+    }
+
+    // Your flight(s): the countdown's deadline, then what the tracker reports.
+    function highlighted(S) {
+      var st = S.ms > 0 ? null : window.FlightTracker.statuses();
+      var names = info.flights || [''];
+      return names.map(function (name, i) {
+        var remark;
+        if (S.ms > 3600e3 || (i > 0 && S.ms > 0)) remark = 'ON TIME';
+        else if (S.ms > 600e3) remark = 'BOARDING';
+        else if (S.ms > 0) remark = 'FINAL CALL';
+        else if (st && st[i]) {
+          remark = { 'In flight': 'IN FLIGHT', 'Landed': 'LANDED', 'Layover': 'LAYOVER', 'Taxiing': 'TAXIING',
+                     'On the ground': i === 0 ? 'DEPARTED' : 'ON TIME', 'Signal lost': 'IN FLIGHT',
+                     'Waiting for signal': i === 0 ? 'DEPARTED' : 'ON TIME' }[st[i]] ||
+                   (st[i].indexOf('Emergency') === 0 ? 'EMERGENCY' : 'DEPARTED');
+        } else remark = 'DEPARTED';
+        var to = codes[i + 1];
+        return {
+          time: i === 0 && isFinite(info.target) ? clock(info.target).slice(0, 5) : '',
+          flight: name || 'T-0',
+          dest: to ? cityOf[to] || to : name ? '' : info.label || 'FINAL COUNTDOWN',
+          gate: '',
+          remark: remark
+        };
+      });
+    }
+
+    function layout() {
+      var narrow = innerWidth < 700;
+      fields = narrow
+        ? [['time', 5, 'TIME'], ['flight', 7, 'FLIGHT'], ['dest', 11, 'TO'], ['remark', 10, 'REMARKS']]
+        : [['time', 5, 'TIME'], ['flight', 7, 'FLIGHT'], ['dest', 15, 'DESTINATION'], ['gate', 4, 'GATE'],
+           ['remark', 11, 'REMARKS']];
+      var em = fields.reduce(function (s, f) { return s + f[1] * 0.9; }, 0) + 0.6 * (fields.length - 1);
+      var px = Math.min(30, innerWidth * 0.94 / em);
+      var n = Math.max(4, Math.min(20, Math.floor((innerHeight * 0.9 / px - 3.6) / 1.5)));
+      board.style.fontSize = px.toFixed(2) + 'px';
+      board.innerHTML = '';
+      flipping = [];
+      rows = [];
+
+      var hd = document.createElement('div');
+      hd.className = 'bhead';
+      hd.innerHTML = '<span class="btitle">DEPARTURES</span>';
+      var clk = document.createElement('span');
+      clk.className = 'brow';
+      hd.appendChild(clk);
+      head = field(clk, 8);
+      board.appendChild(hd);
+
+      var cols = document.createElement('div');
+      cols.className = 'bcols';
+      fields.forEach(function (f) {
+        var s = document.createElement('span');
+        s.style.width = ((f[1] * 0.9 - 0.08) / 0.62).toFixed(2) + 'em';
+        s.textContent = f[2];
+        cols.appendChild(s);
+      });
+      board.appendChild(cols);
+
+      for (var i = 0; i < n; i++) {
+        var row = document.createElement('div');
+        row.className = 'brow' + (i < hlCount ? ' hl' : '');
+        var r = { el: row, f: {} };
+        if (i < hlCount) r.glow = add(row, 'bglow');
+        fields.forEach(function (f) { r.f[f[0]] = field(row, f[1]); });
+        board.appendChild(row);
+        rows.push(r);
+      }
+    }
+
+    function fill(S, flip, slow) {
+      var data = highlighted(S).concat(fillers.map(function (x) {
+        return { time: clock(x.time).slice(0, 5), flight: x.flight, dest: x.dest, gate: x.gate, remark: x.remark };
+      }));
+      rows.forEach(function (r, i) {
+        var d = data[i] || {};
+        fields.forEach(function (f) { write(r.f[f[0]], d[f[0]] || '', flip, slow); });
+        r.f.remark.el.className = 'bfld ' + (REMARK_CLASS[d.remark] || '');
+      });
+    }
+
+    refill();
+    layout();
+    var first = true, slowNext = false;
+
+    return {
+      frame: function (S) {
+        if (first) { first = false; fill(S, false); }
+
+        // The board keeps real time: a flight departs at its time and leaves a
+        // minute later, and the rows shuffle up. In between, remarks change -
+        // more and more often as zero nears.
+        wait -= S.dt;
+        if (wait <= 0 && !S.reduce) {
+          wait = Math.max(1.2, 12 / Math.pow(S.speed / 18, 0.55)) * (0.6 + Math.random() * 0.8);
+          var now = Date.now();
+          if (now > fillers[0].time + 60e3) {
+            fillers.shift();
+            var last = fillers[fillers.length - 1];
+            fillers.push(filler(last.time + (3 + Math.random() * 9) * 60e3));
+          } else if (now > fillers[0].time) {
+            fillers[0].remark = 'DEPARTED';
+          } else {
+            var x = fillers[Math.floor(Math.random() * Math.min(fillers.length, rows.length - hlCount))];
+            if (x.remark !== 'CANCELLED') {
+              x.remark = x.time - now < 25 * 60e3 ? pick(['BOARDING', 'FINAL CALL'])
+                       : pick(['ON TIME', 'DELAYED', 'ON TIME']);
+            }
+          }
+        }
+        var sec = clock(Date.now());
+        if (sec !== lastSec) {
+          lastSec = sec;
+          write(head, sec, !S.reduce);
+          fill(S, !S.reduce, slowNext);
+          slowNext = false;
+        }
+
+        // the flaps themselves, ~22 a second
+        acc += S.dt;
+        while (acc >= 0.045) {
+          acc -= 0.045;
+          for (var i = flipping.length - 1; i >= 0; i--) {
+            var c = flipping[i];
+            c.steps--;
+            if (c.steps <= 0) { c.el.textContent = c.ch; flipping.splice(i, 1); }
+            else c.el.textContent = FLAP.charAt(Math.floor(Math.random() * FLAP.length));
+          }
+        }
+
+        var tx = Math.round(S.px * 50) / 10, ty = Math.round(S.py * -40) / 10;
+        if (tx !== tiltX || ty !== tiltY) {
+          tiltX = tx; tiltY = ty;
+          board.style.transform = 'rotateY(' + tx + 'deg) rotateX(' + ty + 'deg)';
+        }
+        rows.forEach(function (r) { if (r.glow) r.glow.style.opacity = (0.35 + 0.65 * S.beat).toFixed(3); });
+      },
+
+      // Tapping a row sends it round again.
+      poke: function (x, y) {
+        rows.forEach(function (r) {
+          var b = r.el.getBoundingClientRect();
+          if (y < b.top - 4 || y > b.bottom + 4) return;
+          fields.forEach(function (f) {
+            r.f[f[0]].cells.forEach(function (c) {
+              if (!(c.steps > 0)) flipping.push(c);
+              c.steps = 4 + Math.floor(Math.random() * 10);
+            });
+          });
+        });
+      },
+
+      // Every tile on the board goes round at once, landing on a fresh board.
+      zero: function () { refill(); slowNext = true; lastSec = ''; },
+
+      resize: function () { layout(); first = true; },
+      stop: function () { host.remove(); }
+    };
+  };
+
+  // ---------- northern lights: curtains over a mountain skyline ----------
+
+  var RIDGES =
+    '<svg class="ridge far" viewBox="0 0 1200 200" preserveAspectRatio="none" aria-hidden="true">' +
+    '<path fill="#06111f" d="M0 200V122l80-24 70 14 80-42 70 22 80-34 70 26 70-36 80 40 60-30 50 4 40-50 ' +
+    '40 46 70 30 80-28 90 30 80-24 90 28 90-20v114z"/></svg>' +
+    '<svg class="ridge near" viewBox="0 0 1200 200" preserveAspectRatio="none" aria-hidden="true">' +
+    '<path fill="#020509" d="M0 200v-52l60-10 60 12 80-34 60 16 70-8 90 24 80-18 60 8 80-32 60 20 80-8 ' +
+    '80 26 80-18 80 12 80-24 100 22v64z"/></svg>';
+
+  make.aurora = function () {
+    var host = layer('bg-aurora');
+    add(host, 'stars');
+    var cv = canvas(host, 0.4);   // drawn small and scaled up: the softness is free
+    host.insertAdjacentHTML('beforeend', RIDGES);
+    var far = host.querySelector('.ridge.far'), nearR = host.querySelector('.ridge.near');
+    add(host, 'scrim');
+
+    var CURTAINS = [
+      { y: 0.30, amp: 0.05, f1: 1.7, f2: 4.3, s1: 0.50, s2: 0.31, h: 0.30, a: 0.70, dh: 0 },
+      { y: 0.40, amp: 0.06, f1: 2.3, f2: 5.1, s1: 0.37, s2: 0.43, h: 0.26, a: 0.55, dh: 24 },
+      { y: 0.24, amp: 0.04, f1: 1.2, f2: 3.7, s1: 0.29, s2: 0.23, h: 0.20, a: 0.40, dh: 48 },
+      { y: 0.48, amp: 0.05, f1: 2.9, f2: 6.1, s1: 0.45, s2: 0.52, h: 0.22, a: 0.35, dh: -20 }
+    ];
+    var t = 0, bloom = 0, ripples = [], lastP = 99;
+
+    function edge(c, idx, u) {
+      var y = c.y + c.amp * (Math.sin(u * c.f1 + t * c.s1 + idx) + 0.5 * Math.sin(u * c.f2 - t * c.s2 + idx * 2));
+      for (var i = 0; i < ripples.length; i++) {
+        var r = ripples[i], d1 = u - r.u - r.age * 1.6, d2 = u - r.u + r.age * 1.6;
+        y += 0.05 * Math.exp(-r.age * 0.9) * (Math.exp(-d1 * d1 / 0.06) + Math.exp(-d2 * d2 / 0.06));
+      }
+      return y;
+    }
+
+    return {
+      frame: function (S) {
+        var ctx = cv.ctx, w = cv.w, h = cv.h;
+        t += S.dt * (S.reduce ? 0 : 0.18 + Math.pow(S.speed / 900, 0.8) * 1.8);
+        bloom = Math.max(0, bloom - S.dt * 0.3);
+        for (var i = ripples.length - 1; i >= 0; i--) {
+          ripples[i].age += S.dt;
+          if (ripples[i].age > 5) ripples.splice(i, 1);
+        }
+
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.clearRect(0, 0, w, h);
+        ctx.globalCompositeOperation = 'lighter';
+        // green and calm a day out, hot magenta at zero
+        var base = 140 + 180 * S.urgency, shift = S.px * 0.25;
+
+        CURTAINS.forEach(function (c, idx) {
+          var hue = (base + c.dh + 360) % 360;
+          var bright = Math.min(1, (0.75 + 0.35 * S.beat + bloom * 1.4) * c.a);
+          var tall = h * c.h * (1 + bloom * 0.9);
+          var STEP = 4, n = Math.ceil(w / STEP), xs = [], ys = [];
+          for (var j = 0; j <= n; j++) {
+            var u = j / n * Math.PI * 2 + shift;
+            xs.push(j * STEP);
+            ys.push(edge(c, idx, u) * h);
+          }
+          var g = ctx.createLinearGradient(0, h * c.y - tall, 0, h * (c.y + c.amp * 1.6));
+          g.addColorStop(0, hsla(hue + 40, 100, 60, 0));
+          g.addColorStop(0.55, hsla(hue + 25, 100, 60, 0.28 * bright));
+          g.addColorStop(0.86, hsla(hue, 100, 62, bright));
+          g.addColorStop(1, hsla(hue, 100, 62, 0));
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.moveTo(xs[0], ys[0]);
+          for (j = 1; j <= n; j++) ctx.lineTo(xs[j], ys[j]);
+          for (j = n; j >= 0; j--) {
+            var wave = 0.75 + 0.25 * Math.sin(j / n * 9 + t * 0.6 + idx);
+            ctx.lineTo(xs[j], ys[j] - tall * wave);
+          }
+          ctx.closePath();
+          ctx.fill();
+
+          // vertical rays that shimmer along the bottom edge
+          ctx.lineWidth = 1.2;
+          for (j = 0; j < 46; j++) {
+            var k = Math.floor((j / 46 + 0.013 * Math.sin(j * 12.9 + idx)) * n);
+            if (k < 0 || k > n) continue;
+            var a = 0.18 * bright * (0.5 + 0.5 * Math.sin(t * 1.7 + j * 2.3 + idx));
+            ctx.strokeStyle = hsla(hue, 100, 70, a);
+            ctx.beginPath();
+            ctx.moveTo(xs[k], ys[k]);
+            ctx.lineTo(xs[k], ys[k] - tall * (0.5 + 0.4 * Math.sin(j * 7.1)));
+            ctx.stroke();
+          }
+        });
+
+        var p = Math.round(S.px * 40) / 2;
+        if (p !== lastP) {
+          lastP = p;
+          far.style.transform = 'translateX(' + (p * -0.4) + 'px)';
+          nearR.style.transform = 'translateX(' + -p + 'px)';
+        }
+      },
+
+      // A ripple runs out both ways along the curtains from where you tapped.
+      poke: function (x) {
+        ripples.push({ u: x / innerWidth * Math.PI * 2 + 0, age: 0 });
+        bloom = Math.max(bloom, 0.3);
+      },
+
+      zero: function () { bloom = 1; },
+
+      resize: function () { cv.fit(); },
+      stop: function () { host.remove(); }
+    };
+  };
+
+  return {
+    list: LIST,
+    valid: function (name) {
+      name = String(name || '').toLowerCase().trim();
+      return make[name] ? name : '';
+    },
+    make: function (name, info) { return make[name](info); }
+  };
+})();
+
+/* The moment itself: a white flash and fireworks with confetti, drawn on one
+   overlay canvas that only runs while something is in the air. */
+window.FX = (function () {
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var c = null, ctx, k = 1, parts = [], pending = 0, running = false, last = 0;
+  var HUES = [186, 320, 45, 280, 150];
+
+  function size() {
+    k = Math.min(2, window.devicePixelRatio || 1);
+    c.width = Math.round(innerWidth * k);
+    c.height = Math.round(innerHeight * k);
+  }
+
+  function ensure() {
+    if (c) return;
+    c = document.createElement('canvas');
+    c.className = 'fx';
+    c.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(c);
+    ctx = c.getContext('2d');
+    size();
+    window.addEventListener('resize', size);
+  }
+
+  function rocket() {
+    pending--;
+    var g = 900 * k, top = c.height * (0.15 + Math.random() * 0.3);
+    parts.push({ kind: 'rocket', x: c.width * (0.15 + Math.random() * 0.7), y: c.height,
+                 vx: (Math.random() - 0.5) * 80 * k, vy: -Math.sqrt(2 * g * (c.height - top)),
+                 hue: HUES[Math.floor(Math.random() * HUES.length)] });
+    go();
+  }
+
+  function burst(x, y, hue) {
+    for (var i = 0; i < 80; i++) {
+      var a = Math.random() * Math.PI * 2, sp = (60 + Math.random() * 300) * k;
+      parts.push({ kind: 'spark', x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+                   life: 1.1 + Math.random() * 0.7, age: 0, hue: Math.random() < 0.8 ? hue : 45 });
+    }
+  }
+
+  function confetti(n) {
+    for (var i = 0; i < n; i++) {
+      parts.push({ kind: 'bit', x: Math.random() * c.width, y: -Math.random() * c.height * 0.5,
+                   vy: (90 + Math.random() * 160) * k, sway: Math.random() * 6, spin: 2 + Math.random() * 8,
+                   rot: Math.random() * 6, hue: HUES[Math.floor(Math.random() * HUES.length)],
+                   w: (5 + Math.random() * 4) * k, h: (8 + Math.random() * 6) * k, age: 0 });
+    }
+  }
+
+  function go() {
+    if (running) return;
+    running = true;
+    last = performance.now();
+    requestAnimationFrame(step);
+  }
+
+  function step(now) {
+    var dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    ctx.clearRect(0, 0, c.width, c.height);
+    ctx.globalCompositeOperation = 'lighter';
+    for (var i = parts.length - 1; i >= 0; i--) {
+      var p = parts[i];
+      if (p.kind === 'rocket') {
+        p.vy += 900 * k * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+        if (p.vy >= -40 * k) { burst(p.x, p.y, p.hue); parts.splice(i, 1); continue; }
+        ctx.strokeStyle = 'hsla(' + p.hue + ',100%,80%,0.9)';
+        ctx.lineWidth = 2 * k;
+        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx * 0.03, p.y - p.vy * 0.03); ctx.stroke();
+      } else if (p.kind === 'spark') {
+        p.age += dt;
+        if (p.age >= p.life) { parts.splice(i, 1); continue; }
+        p.vx *= 0.985; p.vy = p.vy * 0.985 + 160 * k * dt;
+        p.x += p.vx * dt; p.y += p.vy * dt;
+        var a = 1 - p.age / p.life;
+        ctx.strokeStyle = 'hsla(' + p.hue + ',100%,' + (60 + 30 * a) + '%,' + a.toFixed(3) + ')';
+        ctx.lineWidth = 2 * k;
+        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx * 0.05, p.y - p.vy * 0.05); ctx.stroke();
+      } else {
+        p.age += dt;
+        p.y += p.vy * dt;
+        p.x += Math.sin(p.age * 2 + p.sway) * 40 * k * dt;
+        p.rot += p.spin * dt;
+        if (p.y > c.height + 20) { parts.splice(i, 1); continue; }
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.scale(1, Math.cos(p.rot * 1.3));
+        ctx.fillStyle = 'hsl(' + p.hue + ',100%,65%)';
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+        ctx.globalCompositeOperation = 'lighter';
+      }
+    }
+    if (parts.length || pending > 0) requestAnimationFrame(step);
+    else { running = false; ctx.clearRect(0, 0, c.width, c.height); }
+  }
+
+  function flash() {
+    var f = document.createElement('div');
+    f.className = 'flash';
+    document.body.appendChild(f);
+    if (!f.animate) { f.remove(); return; }
+    f.animate([{ opacity: 0.85 }, { opacity: 0 }], { duration: 900, easing: 'ease-out' })
+      .onfinish = function () { f.remove(); };
+  }
+
+  return {
+    // 'zero': flash, a volley of fireworks and confetti. 'landed': gentler.
+    celebrate: function (kind) {
+      if (reduce) return;
+      ensure();
+      var big = kind !== 'landed';
+      if (big) flash();
+      var n = big ? 8 : 4;
+      pending += n;
+      for (var i = 0; i < n; i++) setTimeout(rocket, i * (big ? 380 : 600) + Math.random() * 200);
+      confetti(big ? 140 : 180);
+      go();
+    }
+  };
+})();
+
+/* Sound, off until the viewer turns it on (browsers allow audio only after a
+   click or tap anyway). All synthesized: a tick each second, a drone that rises
+   through the last minute, and an original fanfare at zero. */
+window.Sound = (function () {
+  var AC = window.AudioContext || window.webkitAudioContext;
+  var ctx = null, out = null, on = false, touched = false, drone = null, noiseBuf = null;
+
+  // The audio context, started if need be; null until it is running. It is not
+  // created before the first tap or key, which is when browsers allow it.
+  function live() {
+    if (!on || !AC || !touched) return null;
+    if (!ctx) {
+      ctx = new AC();
+      var comp = ctx.createDynamicsCompressor();
+      out = ctx.createGain();
+      out.gain.value = 0.6;
+      out.connect(comp);
+      comp.connect(ctx.destination);
+    }
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx.state === 'running' ? ctx : null;
+  }
+
+  // One enveloped oscillator: `type` at `freq` Hz from `t` for `dur` seconds.
+  function tone(type, freq, t, dur, vol, dest) {
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type;
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g);
+    g.connect(dest || out);
+    o.start(t);
+    o.stop(t + dur + 0.05);
+    return o;
+  }
+
+  function crash(t) {
+    if (!noiseBuf) {
+      noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+      var d = noiseBuf.getChannelData(0);
+      for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    var s = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noiseBuf;
+    hp.type = 'highpass';
+    hp.frequency.value = 3500;
+    g.gain.setValueAtTime(0.25, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
+    s.connect(hp); hp.connect(g); g.connect(out);
+    s.start(t);
+    s.stop(t + 2);
+  }
+
+  return {
+    supported: !!AC,
+    enabled: function () { return on; },
+    // From a click, so it counts as the gesture; `restore` is the saved setting
+    // at load, which has to wait for one.
+    set: function (v, restore) {
+      on = !!v;
+      if (!restore) touched = true;
+      if (!on) this.drone(0);
+      else if (live()) this.tick(false);
+    },
+    // Called on any tap or key: the first gesture is what lets audio start.
+    unlock: function () { touched = true; live(); },
+
+    tick: function (strong) {
+      var c = live();
+      if (!c) return;
+      var t = c.currentTime;
+      if (strong) {
+        tone('sine', 880, t, 0.3, 0.22);
+        tone('sine', 110, t, 0.4, 0.4);
+      } else {
+        tone('triangle', 1600, t, 0.05, 0.05);
+      }
+    },
+
+    // level 0..1 over the last minute; 0 stops it.
+    drone: function (level) {
+      if (!ctx || !on) level = 0;
+      if (level <= 0) {
+        if (drone) {
+          var d = drone;
+          drone = null;
+          d.g.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.12);
+          setTimeout(function () { d.o.forEach(function (o) { o.stop(); }); }, 900);
+        }
+        return;
+      }
+      if (ctx.state !== 'running') return;
+      var t = ctx.currentTime;
+      if (!drone) {
+        var f = ctx.createBiquadFilter(), g = ctx.createGain();
+        f.type = 'lowpass';
+        f.Q.value = 4;
+        g.gain.value = 0.0001;
+        f.connect(g);
+        g.connect(out);
+        drone = { f: f, g: g, level: -1, o: [[1, 'sawtooth'], [1.006, 'sawtooth'], [0.5, 'square']].map(function (x) {
+          var o = ctx.createOscillator();
+          o.type = x[1];
+          o.mult = x[0];
+          o.connect(f);
+          o.start(t);
+          return o;
+        }) };
+      }
+      if (Math.abs(level - drone.level) < 0.004) return;
+      drone.level = level;
+      var f0 = 55 * Math.pow(2, level * 2);
+      drone.o.forEach(function (o) { o.frequency.setTargetAtTime(f0 * o.mult, t, 0.1); });
+      drone.f.frequency.setTargetAtTime(180 + level * level * 3000, t, 0.1);
+      drone.g.gain.setTargetAtTime(0.03 + level * 0.09, t, 0.2);
+    },
+
+    // A rising arpeggio into a held, bright chord, with a sub hit and a crash.
+    fanfare: function () {
+      var c = live();
+      if (!c) return;
+      var t = c.currentTime + 0.02;
+      var bus = c.createBiquadFilter();
+      bus.type = 'lowpass';
+      bus.Q.value = 5;
+      bus.frequency.setValueAtTime(700, t);
+      bus.frequency.exponentialRampToValueAtTime(5200, t + 0.7);
+      bus.frequency.exponentialRampToValueAtTime(1400, t + 2.8);
+      bus.connect(out);
+      [261.63, 329.63, 392.0, 523.25].forEach(function (f, i) { tone('sawtooth', f, t + i * 0.09, 0.26, 0.12, bus); });
+      var t2 = t + 0.38;
+      [130.81, 261.63, 329.63, 392.0, 587.33].forEach(function (f) {
+        [-7, 7].forEach(function (cents) { tone('sawtooth', f, t2, 2.8, 0.06, bus).detune.value = cents; });
+      });
+      tone('sine', 65.41, t2, 1.4, 0.5);
+      crash(t2);
+    },
+
+    // Airport-style chime, for a landing.
+    chime: function () {
+      var c = live();
+      if (!c) return;
+      var t = c.currentTime + 0.02;
+      [523.25, 659.25, 783.99, 1046.5].forEach(function (f, i) {
+        tone('sine', f, t + i * 0.32, 1.8, 0.16);
+        tone('sine', f * 2.01, t + i * 0.32, 0.6, 0.03);
+      });
     }
   };
 })();
@@ -1671,43 +3386,46 @@ window.FlightTracker = (function () {
     return naive - offsetAt(guess, tz); // second pass settles DST edges
   }
 
+  function validZone(tz) {
+    try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); return true; }
+    catch (e) { return false; }
+  }
+
+  // Anything wrong with the deadline replaces the digits with an explanation.
+  // The background, picker and sound keep running, so the page reads as unset
+  // rather than broken.
+  var TARGET = NaN;
   if (!wanted) {
     unconfigured(
       'No deadline set. Put <code>COUNTDOWN_TARGET</code> in <code>.env</code> ' +
       '(start from <code>.env.example</code>), then run ' +
       '<code>docker compose up -d --build</code>.'
     );
-    return;
-  }
+  } else if (zone && !validZone(zone)) {
+    unconfigured(
+      'COUNTDOWN_TZ is not a timezone: <code>' + esc(zone) + '</code>. ' +
+      'Use an IANA name such as <code>America/Los_Angeles</code>, or leave it blank.'
+    );
+  } else {
+    var hasOffset = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(String(wanted).trim());
+    // With an explicit offset the string is already absolute; with a zone it is
+    // wall-clock time there; with neither it is the viewer's own local time.
+    TARGET = (!hasOffset && zone)
+      ? parseInZone(String(wanted), zone)
+      : Date.parse(wanted);
 
-  if (zone) {
-    try { new Intl.DateTimeFormat('en-US', { timeZone: zone }); }
-    catch (e) {
+    if (isNaN(TARGET)) {
       unconfigured(
-        'COUNTDOWN_TZ is not a timezone: <code>' + esc(zone) + '</code>. ' +
-        'Use an IANA name such as <code>America/Los_Angeles</code>, or leave it blank.'
+        'Could not read the deadline <code>' + esc(wanted) + '</code>. Expected ' +
+        '<code>YYYY-MM-DDTHH:MM</code>' + (zone ? ' in ' + esc(zone) : '') +
+        ', or an absolute instant like <code>2026-10-30T01:00:00Z</code>.'
       );
-      return;
     }
   }
+  var ok = !isNaN(TARGET);
+  var customLabel = label;
 
-  var hasOffset = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(String(wanted).trim());
-  // With an explicit offset the string is already absolute; with a zone it is
-  // wall-clock time there; with neither it is the viewer's own local time.
-  var TARGET = (!hasOffset && zone)
-    ? parseInZone(String(wanted), zone)
-    : Date.parse(wanted);
-
-  if (isNaN(TARGET)) {
-    unconfigured(
-      'Could not read the deadline <code>' + esc(wanted) + '</code>. Expected ' +
-      '<code>YYYY-MM-DDTHH:MM</code>' + (zone ? ' in ' + esc(zone) : '') +
-      ', or an absolute instant like <code>2026-10-30T01:00:00Z</code>.'
-    );
-    return;
-  }
-
-  if (!label) {
+  if (ok && !label) {
     // Spelled out component by component: dateStyle/timeStyle cannot be combined
     // with timeZoneName, and the zone abbreviation is the point of the caption.
     var fmt = {
@@ -1718,30 +3436,282 @@ window.FlightTracker = (function () {
     try { label = new Date(TARGET).toLocaleString(undefined, fmt); }
     catch (e) { label = new Date(TARGET).toLocaleString(); }
   }
-  targetEl.textContent = label;
+  if (ok) targetEl.textContent = label;
 
   var tracker = window.FlightTracker;
-  var flightShown = flight && tracker ? tracker.describe(flight) : null;
-  if (flightShown) {
+  var flights = flight && tracker ? tracker.legsOf(flight) : null;
+  var flightShown = flights && flights.join(' → ');
+  if (ok && flightShown) {
     var hint = document.getElementById('targetFlight');
     hint.textContent = 'Then live tracking: ' + flightShown +
-      (flightRoute ? ' \u00b7 ' + flightRoute.toUpperCase() : '');
+      (flightRoute ? ' · ' + flightRoute.toUpperCase() : '');
     hint.hidden = false;
   }
+
+  var root = document.documentElement;
+  var wrap = document.querySelector('.wrap');
+  var finalEl = document.getElementById('final');
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var Scenes = window.Scenes, FX = window.FX, Sound = window.Sound;
+  var tracking = false;
 
   // At zero the clock gives way to the tracker - after a few seconds of TIME'S UP
   // if the viewer watched it hit zero, straight away if they arrived later.
   function startTracking() {
     if (!flightShown || !tracker.start(flight, { tz: zone, route: flightRoute })) return;
+    tracking = true;
     document.body.classList.add('tracking');
     document.querySelector('.eyebrow').textContent = "Time's up · live";
   }
 
-  var root = document.documentElement;
-  var clock = document.getElementById('clock');
-  var grid = document.getElementById('grid');
-  var horizon = document.getElementById('horizon');
-  var sunGlow = document.getElementById('sunGlow');
+  // Flash, fireworks, the scene's own moment and the fanfare. Only for a zero
+  // the viewer actually watched - not for a page opened after it.
+  function celebrate() {
+    FX.celebrate('zero');
+    if (scene.zero && !reduce) scene.zero();
+    Sound.drone(0);
+    Sound.fanfare();
+  }
+
+  if (flightShown) {
+    tracker.on(function (e) {
+      if (e.type === 'landed' && e.last) {
+        FX.celebrate('landed');
+        Sound.chime();
+      }
+      flightAlert(e);
+    });
+  }
+
+  // ---- settings each viewer keeps for themselves ----
+
+  function stored(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function store(k, v) {
+    try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {}
+  }
+
+  var ICON = {
+    soundOn: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/>' +
+             '<path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>',
+    soundOff: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/>' +
+              '<path d="M17 9.5l5 5M22 9.5l-5 5"/></svg>',
+    fsOn: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
+    fsOff: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>'
+  };
+
+  // Background. COUNTDOWN_BG sets the default; ?bg= on the URL, then the
+  // viewer's own pick from the corner menu, win over it. An unknown name falls
+  // back to the default rather than blanking the page.
+  var bgPick = document.getElementById('bgPick');
+  var bgDefault = Scenes.valid(cfg.bg) || 'synthwave';
+  var bgUrl = Scenes.valid(qs.get('bg'));
+  var sceneInfo = { target: TARGET, zone: zone, label: customLabel, flights: flights, route: flightRoute };
+  var scene = null;
+
+  function useScene(name) {
+    // synthwave is in the page from the start; any other scene replaces it
+    if (scene) scene.stop();
+    else document.getElementById('sceneSynth').hidden = name !== 'synthwave';
+    root.setAttribute('data-bg', name);
+    scene = Scenes.make(name, sceneInfo);
+    bgPick.value = name;
+  }
+
+  Scenes.list.forEach(function (s) {
+    var o = document.createElement('option');
+    o.value = s[0];
+    o.textContent = s[1] + (s[0] === bgDefault ? ' (default)' : '');
+    bgPick.appendChild(o);
+  });
+  bgPick.addEventListener('change', function () {
+    var name = bgPick.value;
+    store('fc-bg', name === bgDefault ? null : name);
+    if (bgUrl) {
+      // keep a ?bg= link in step with what is on screen
+      var u = new URL(location.href);
+      u.searchParams.set('bg', name);
+      history.replaceState(null, '', u);
+    }
+    useScene(name);
+  });
+  useScene(bgUrl || Scenes.valid(stored('fc-bg')) || bgDefault);
+  window.addEventListener('resize', function () { if (scene.resize) scene.resize(); });
+
+  // Sound: off unless this viewer turned it on before.
+  var sndBtn = document.getElementById('sndBtn');
+  function showSound() {
+    var on = Sound.enabled();
+    sndBtn.innerHTML = on ? ICON.soundOn : ICON.soundOff;
+    sndBtn.setAttribute('aria-pressed', on);
+    sndBtn.title = on ? 'Sound on' : 'Sound off';
+  }
+  if (Sound.supported) {
+    Sound.set(stored('fc-sound') === '1', true);
+    showSound();
+    sndBtn.addEventListener('click', function () {
+      Sound.set(!Sound.enabled());
+      store('fc-sound', Sound.enabled() ? '1' : null);
+      showSound();
+    });
+  } else {
+    sndBtn.hidden = true;
+  }
+
+  // Flight alerts: browser notifications for takeoff, landing and emergencies,
+  // which arrive even with the tab in the background. Browsers only offer them
+  // over https (or on localhost).
+  var bellBtn = document.getElementById('bellBtn');
+  var canAlert = !!flightShown && 'Notification' in window && window.isSecureContext;
+  function alertsOn() {
+    return canAlert && Notification.permission === 'granted' && stored('fc-alerts') === '1';
+  }
+  function showBell() {
+    bellBtn.setAttribute('aria-pressed', alertsOn());
+    bellBtn.title = alertsOn() ? 'Flight alerts on'
+      : Notification.permission === 'denied' ? 'Flight alerts are blocked in this browser\'s settings'
+      : 'Flight alerts: takeoff and landing';
+  }
+  if (canAlert) {
+    bellBtn.hidden = false;
+    showBell();
+    bellBtn.addEventListener('click', function () {
+      if (alertsOn()) { store('fc-alerts', null); showBell(); return; }
+      Promise.resolve(Notification.requestPermission()).then(function (p) {
+        if (p === 'granted') store('fc-alerts', '1');
+        showBell();
+      });
+    });
+  }
+
+  function notify(title, body, tag) {
+    if (!alertsOn()) return;
+    try { new Notification(title, { body: body || '', tag: tag }); } catch (e) {}
+  }
+
+  function flightAlert(e) {
+    var r = e.route;
+    if (e.type === 'takeoff') {
+      notify(e.flight + ' has taken off',
+             (r ? r.from.code + ' → ' + r.to.code : '') + (e.eta ? (r ? ' · ' : '') + 'lands about ' + e.eta : ''),
+             'fc-' + e.leg + '-up');
+    } else if (e.type === 'landed') {
+      notify(e.flight + ' has landed' + (r ? ' in ' + r.to.city : ''),
+             e.next ? 'Next up: ' + e.next : 'That was the last flight.', 'fc-' + e.leg + '-down');
+    } else {
+      notify(e.flight + ': ' + e.status, 'The aircraft is squawking an emergency code.', 'fc-' + e.leg + '-sos');
+    }
+  }
+
+  // Keep the screen on, for a page left up on a TV or a spare laptop. The
+  // browser drops the lock whenever the tab is hidden; it is taken again on return.
+  var wakeBtn = document.getElementById('wakeBtn');
+  var wakeWanted = stored('fc-wake') === '1', wakeLock = null;
+  function wake() {
+    if (!wakeWanted || wakeLock || document.hidden) return;
+    navigator.wakeLock.request('screen').then(function (l) {
+      wakeLock = l;
+      l.addEventListener('release', function () { wakeLock = null; });
+    }).catch(function () {});
+  }
+  if ('wakeLock' in navigator) {
+    wakeBtn.hidden = false;
+    wakeBtn.setAttribute('aria-pressed', wakeWanted);
+    wakeBtn.addEventListener('click', function () {
+      wakeWanted = !wakeWanted;
+      store('fc-wake', wakeWanted ? '1' : null);
+      wakeBtn.setAttribute('aria-pressed', wakeWanted);
+      if (wakeWanted) wake();
+      else if (wakeLock) wakeLock.release();
+    });
+    document.addEventListener('visibilitychange', wake);
+    wake();
+  }
+
+  var fsBtn = document.getElementById('fsBtn');
+  var fsReq = root.requestFullscreen || root.webkitRequestFullscreen;
+  function fsOn() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+  function showFs() {
+    fsBtn.innerHTML = fsOn() ? ICON.fsOff : ICON.fsOn;
+    fsBtn.setAttribute('aria-pressed', fsOn());
+    fsBtn.title = fsOn() ? 'Leave full screen' : 'Full screen';
+  }
+  if (fsReq) {
+    fsBtn.hidden = false;
+    showFs();
+    fsBtn.addEventListener('click', function () {
+      var p = fsOn() ? (document.exitFullscreen || document.webkitExitFullscreen).call(document)
+                     : fsReq.call(root);
+      if (p && p.catch) p.catch(function () {});
+    });
+    document.addEventListener('fullscreenchange', showFs);
+    document.addEventListener('webkitfullscreenchange', showFs);
+  }
+
+  // The corner controls fade out after a few idle seconds and come back on
+  // any movement, tap or key.
+  var controls = document.getElementById('controls'), idleTimer = 0;
+  function awake() {
+    controls.classList.remove('idle');
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function () { controls.classList.add('idle'); }, 3000);
+  }
+  awake();
+
+  // ---- pointer: parallax, taps and drags ----
+
+  var aim = { x: 0, y: 0 }, par = { x: 0, y: 0 }, down = null, tiltAsked = false;
+
+  // Taps on the background - anywhere but a control or the tracker panel - go
+  // to the scene. The first one also lets sound start and, on iPhone, asks for
+  // the tilt sensor that drives the parallax there.
+  function onBackground(t) {
+    return !(t.closest && t.closest('button, a, select, label, input, .flight, .controls'));
+  }
+
+  function askTilt() {
+    if (tiltAsked || reduce) return;
+    tiltAsked = true;
+    var D = window.DeviceOrientationEvent;
+    if (D && typeof D.requestPermission === 'function') D.requestPermission().catch(function () {});
+  }
+
+  window.addEventListener('pointerdown', function (e) {
+    awake();
+    Sound.unlock();
+    if (e.button > 0 || !onBackground(e.target)) return;
+    askTilt();
+    down = { id: e.pointerId, x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, drag: false };
+  });
+
+  window.addEventListener('pointermove', function (e) {
+    awake();
+    if (e.pointerType === 'mouse') {
+      aim.x = e.clientX / innerWidth * 2 - 1;
+      aim.y = e.clientY / innerHeight * 2 - 1;
+    }
+    if (!down || e.pointerId !== down.id) return;
+    if (!down.drag && Math.abs(e.clientX - down.x) + Math.abs(e.clientY - down.y) > 8) down.drag = true;
+    if (down.drag && scene.drag) scene.drag(e.clientX - down.lx, e.clientY - down.ly, false);
+    down.lx = e.clientX;
+    down.ly = e.clientY;
+  });
+
+  window.addEventListener('pointerup', function (e) {
+    if (!down || e.pointerId !== down.id) return;
+    if (down.drag) { if (scene.drag) scene.drag(0, 0, true); }
+    else if (scene.poke) scene.poke(e.clientX, e.clientY);
+    down = null;
+  });
+  window.addEventListener('pointercancel', function () { down = null; });
+  window.addEventListener('keydown', function () { awake(); Sound.unlock(); });
+
+  window.addEventListener('deviceorientation', function (e) {
+    if (e.gamma === null || e.beta === null) return;
+    aim.x = Math.max(-1, Math.min(1, e.gamma / 30));
+    aim.y = Math.max(-1, Math.min(1, (e.beta - 45) / 30));
+  });
+
+  // ---- the clock ----
 
   var el = {
     d: document.getElementById('d'),
@@ -1752,17 +3722,23 @@ window.FlightTracker = (function () {
   };
   var last = { d: null, h: null, m: null, s: null, cs: null };
 
-  var TILE = 72;      // grid tile size, must match the CSS gradients
-  var TILT = 80;      // floor rake, must match the CSS transform
+  var arrEl = document.getElementById('flArrive');
+  var arrLbl = document.getElementById('flArriveLbl');
+  var arrClock = document.getElementById('flArriveClock');
+  var arrLabel = '', arrText = '';
+
   var HUE_CALM = 186; // cyan
   var HUE_HOT = 320;  // hot magenta
 
-  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var offset = 0;
+  var hueNow = HUE_CALM;
   var lastT = 0;
   var lastHue = -1;
   var done = false;
   var firstFrame = true;
+  var isFinal = false;
+  var lastN = 0;
+  var S = {};
+  var sceneErr = false;
 
   // Grid speed in px/s, interpolated on log10(seconds remaining) so it ramps
   // continuously instead of stepping: calm a week out, hyperspace at the end.
@@ -1794,55 +3770,132 @@ window.FlightTracker = (function () {
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
 
   function set(key, text) {
-    if (last[key] !== text) {
-      last[key] = text;
-      el[key].textContent = text;
-    }
+    if (last[key] === text) return false;
+    last[key] = text;
+    el[key].textContent = text;
+    return true;
+  }
+
+  // A digit that changes rolls in - or flaps over, on the departure board.
+  function flip(node) {
+    if (reduce || firstFrame || !node.animate) return;
+    var board = root.getAttribute('data-bg') === 'board';
+    node.animate(board
+      ? [{ transform: 'perspective(400px) rotateX(-80deg)', filter: 'brightness(0.5)' },
+         { transform: 'none', filter: 'none' }]
+      : [{ transform: 'translateY(-0.16em)', opacity: 0.2, filter: 'blur(3px)' },
+         { transform: 'none', opacity: 1, filter: 'none' }],
+      { duration: board ? 240 : 320, easing: 'cubic-bezier(.2,.8,.3,1)' });
+  }
+
+  // Each of the last ten seconds lands with a punch.
+  function pop(node) {
+    if (reduce || !node.animate) return;
+    node.animate([
+      { transform: 'scale(1.45)', opacity: 0.3 },
+      { transform: 'scale(1)', opacity: 1, offset: 0.3 },
+      { transform: 'scale(0.94)', opacity: 0.85 }
+    ], { duration: 1000, easing: 'ease-out' });
+  }
+
+  // The second act: big digits counting down to the landing, while in the air.
+  function showArrival(arr, left) {
+    if (!arr) { if (!arrEl.hidden) arrEl.hidden = true; return; }
+    arrEl.hidden = false;
+    var lbl = left > 0
+      ? (arr.legs > 1 ? 'Flight ' + (arr.leg + 1) + ' of ' + arr.legs + ' · lands in ' : 'Lands in ') + arr.city + ' in'
+      : 'Landing in ' + arr.city + ' any moment';
+    var s = Math.floor(left / 1000), h = (s / 3600) | 0;
+    var txt = (h ? h + '<i>h</i>' : '') + pad(((s / 60) | 0) % 60) + '<i>m</i>' + pad(s % 60) + '<i>s</i>';
+    if (lbl !== arrLabel) { arrLabel = lbl; arrLbl.textContent = lbl; }
+    if (txt !== arrText) { arrText = txt; arrClock.innerHTML = txt; }
   }
 
   function frame(now) {
     if (now === undefined) now = performance.now();
-    var dt = lastT ? Math.min(0.05, (now - lastT) / 1000) : 0;
+    // (the first rAF timestamp can be a hair before the performance.now() of
+    // the direct first call, so never let time run backwards)
+    var dt = lastT ? Math.max(0, Math.min(0.05, (now - lastT) / 1000)) : 0;
     lastT = now;
 
-    var ms = TARGET - Date.now();
-    if (ms < 0) ms = 0;
+    var t = Date.now();
+    var ms = ok ? Math.max(0, TARGET - t) : Infinity;
+    // After zero the scene keeps time against the landing instead, if a plane
+    // is in the air: calm again at takeoff, hot again on final approach.
+    var arr = tracking ? tracker.arrival() : null;
+    var left = arr ? Math.max(0, arr.eta - t) : 0;
+    var act = ms > 0 ? ms : left;
+    showArrival(arr, left);
 
-    set('d', pad((ms / 86400000) | 0));
-    set('h', pad(((ms / 3600000) | 0) % 24));
-    set('m', pad(((ms / 60000) | 0) % 60));
-    set('s', pad(((ms / 1000) | 0) % 60));
-    set('cs', '.' + pad(((ms % 1000) / 10) | 0));
+    if (ok) {
+      var d = (ms / 86400000) | 0;
+      if (set('d', pad(d))) flip(el.d);
+      if (set('h', pad(((ms / 3600000) | 0) % 24))) flip(el.h);
+      if (set('m', pad(((ms / 60000) | 0) % 60))) flip(el.m);
+      var tick = set('s', pad(((ms / 1000) | 0) % 60));
+      set('cs', '.' + pad(((ms % 1000) / 10) | 0));
+      if (tick && ms > 0) {
+        if (root.getAttribute('data-bg') === 'board') flip(el.s.parentNode);
+        if (!firstFrame) Sound.tick(ms <= 10000);
+        document.title = (d ? d + 'd ' : '') + last.h + ':' + last.m + ':' + last.s + ' · The Final Countdown';
+      }
+      Sound.drone(ms > 0 && ms < 60000 ? 1 - ms / 60000 : 0);
 
-    // palette: only written when the rounded hue actually moves
-    var hue = Math.round(HUE_CALM + (HUE_HOT - HUE_CALM) * urgencyFor(ms));
+      var fin = ms > 0 && ms <= 10000;
+      if (fin !== isFinal) {
+        isFinal = fin;
+        wrap.classList.toggle('is-final', fin);
+      }
+      if (fin) {
+        var n = Math.ceil(ms / 1000);
+        if (n !== lastN) {
+          lastN = n;
+          finalEl.textContent = n;
+          pop(finalEl);
+        }
+      }
+    }
+
+    // palette: eased, so the landing countdown taking over at zero glides back
+    // to cyan instead of snapping; only written when the rounded hue moves
+    var urg = !ok ? 0 : act > 0 ? urgencyFor(act) : 1;
+    var want = HUE_CALM + (HUE_HOT - HUE_CALM) * urg;
+    hueNow = firstFrame ? want : hueNow + Math.max(-30 * dt, Math.min(30 * dt, want - hueNow));
+    var hue = Math.round(hueNow);
     if (hue !== lastHue) {
       lastHue = hue;
       root.style.setProperty('--accent-h', hue);
     }
 
-    // grid scroll - transform only, so it stays on the compositor
     if (!reduce) {
-      offset = (offset + (ms > 0 ? speedFor(ms) : 14) * dt) % TILE;
-      grid.style.transform =
-        'rotateX(' + TILT + 'deg) translate3d(0,' + offset.toFixed(2) + 'px,0)';
+      par.x += (aim.x - par.x) * Math.min(1, dt * 4);
+      par.y += (aim.y - par.y) * Math.min(1, dt * 4);
     }
 
+    S.dt = dt;
+    S.ms = ms;
+    S.live = ok && act > 0;
+    S.speed = S.live ? speedFor(act) : 14;
     // beat: sharp hit on every whole second, decaying - same clock as the digits
-    if (!reduce && ms > 0) {
-      var beat = Math.pow(1 - (ms % 1000) / 1000, 4);
-      sunGlow.style.opacity = (0.32 + 0.5 * beat).toFixed(3);
-      horizon.style.opacity = (0.72 + 0.28 * beat).toFixed(3);
-      horizon.style.transform = 'scaleY(' + (1 + 2.4 * beat).toFixed(3) + ')';
-    }
+    S.beat = S.live && !reduce ? Math.pow(1 - (act % 1000) / 1000, 4) : 0;
+    S.urgency = urg;
+    S.hue = hueNow;
+    S.px = par.x;
+    S.py = par.y;
+    S.reduce = reduce;
+    // A background is decoration: a bug in one must never stop the clock.
+    try { scene.frame(S); }
+    catch (e) { if (!sceneErr) { sceneErr = true; console.error(e); } }
 
-    if (ms === 0 && !done) {
+    if (ok && ms === 0 && !done) {
       done = true;
-      clock.classList.add('done');
+      clockEl.classList.add('done');
       document.title = "Time's up";
-      sunGlow.style.opacity = '0.32';
-      horizon.style.opacity = '0.72';
-      horizon.style.transform = 'scaleY(1)';
+      Sound.drone(0);
+      if (!firstFrame) {
+        celebrate();
+        notify("Time's up", flightShown ? 'Now tracking ' + flightShown + ' live.' : label, 'fc-zero');
+      }
       setTimeout(startTracking, firstFrame ? 0 : 4000);
     }
     firstFrame = false;

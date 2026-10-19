@@ -12,4 +12,5 @@ services:
       COUNTDOWN_LABEL: "${COUNTDOWN_LABEL:-}"
       COUNTDOWN_FLIGHT: "${COUNTDOWN_FLIGHT:-}"
       COUNTDOWN_ROUTE: "${COUNTDOWN_ROUTE:-}"
+      COUNTDOWN_BG: "${COUNTDOWN_BG:-}"
     restart: unless-stopped
