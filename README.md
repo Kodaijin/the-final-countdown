@@ -234,7 +234,7 @@ domain): every airport with an IATA code and scheduled service. Regenerate it wi
 | `synthwave` (default) | Banded sun, glowing horizon and a perspective grid floor, all CSS |
 | `hyperspace` | A starfield that stretches into light-speed streaks at the end, then drops out of warp |
 | `globe` | Earth turning, with `COUNTDOWN_ROUTE` drawn on it; at zero it dives in on the first airport. Drag to spin it |
-| `board` | A split-flap departures board with your flight(s) pinned on top: *On time*, *Boarding* in the last hour, *Final call* in the last ten minutes, then the tracker's status |
+| `board` | A split-flap departures board with your flight(s) climbing it: *On time*, *Boarding* in the last hour, *Final call* in the last ten minutes, then the tracker's status |
 | `aurora` | Northern lights over a mountain skyline, green and slow far out, magenta and fast at the end |
 
 Viewers can switch with the menu in the bottom-right corner. Their pick is remembered in
@@ -242,7 +242,7 @@ their own browser, so a changed `COUNTDOWN_BG` only reaches people who never pic
 who pick the entry marked *default*). A `?bg=` link beats both.
 
 Every background runs off the same `requestAnimationFrame` loop that drives the digits, and
-reacts to the countdown the same three ways:
+reacts to the countdown the same four ways:
 
 - **Beat** — a pulse on every whole second, in sync with the digits
   (`beat = (1 - frac) ** 4` off the same remaining-ms value).
@@ -252,6 +252,17 @@ reacts to the countdown the same three ways:
   spin, flap rate or wave speed.
 - **Palette** — the accent hue slides from cyan (186°) to hot magenta (320°) as time runs
   out, via a single `--accent-h` custom property that every layer derives from.
+- **Progress** — how far along the wait is, 0 about 11 days out to 1 at zero, on the same
+  log scale as the speed (about 20% a day out, 40% an hour out, 70% a minute out). Each
+  background shows it as something you can read at a glance:
+  - synthwave: the sun rises from a sliver on the horizon to clear of it, and the sky warms
+  - hyperspace: the destination planet grows from a pinpoint at the vanishing point
+  - globe: the night side turns until dawn reaches the first airport of the route at zero
+  - board: your flight starts at the foot of the board and climbs a row at a time to the top
+  - aurora: the storm builds from one faint band to four tall curtains, and the moon rises
+
+  After zero, while a tracked flight is in the air, progress starts over against the
+  landing: the sun eases back down at takeoff and comes up again on final approach.
 
 They also follow the mouse (or the phone's tilt) with a little parallax, and answer a tap
 anywhere on the background: a shooting star, a burst of sparks, a ping on the globe, a row
