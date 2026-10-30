@@ -66,7 +66,15 @@ mean and daylight saving is worked out for you — the same `18:00` is UTC-7 on 
 UTC-8 two weeks later. Leave `COUNTDOWN_TZ` blank to have the time read in each viewer's
 own timezone instead. You can also give an absolute instant (`2026-10-30T01:00:00Z` or
 `2026-10-29T18:00:00-07:00`), in which case the zone only affects how the caption reads.
-Whatever the input, everyone counts down to the same moment.
+Whatever the input, everyone counts down to the same moment. For a flight, use the zone of
+the airport it leaves from, so the caption and departure board match the ticket:
+
+```sh
+COUNTDOWN_TARGET=2026-10-30T08:07:00   # as printed on the ticket
+COUNTDOWN_TZ=America/New_York          # Pittsburgh, where it takes off
+```
+
+An open page keeps the deadline it loaded with, so reload it after changing the deadline.
 
 The deadline is written into the page at container start by
 `docker/30-countdown-config.sh`, so an `.env` edit needs a restart rather than a new image
@@ -168,11 +176,16 @@ draws the whole trip. A page opened mid-trip catches up on its own: the next leg
 checked every 15 seconds or so, and once it is airborne the earlier one counts as flown.
 
 The tracker shows the plane on a map with its route and trail, plus altitude and climb
-rate, ground speed, heading, distance to go, a progress bar and an estimated arrival time
-(in `COUNTDOWN_TZ`), the aircraft type and registration, and a status: *Waiting for
-signal*, *On the ground*, *Taxiing*, *In flight*, *Signal lost*, *Landed*, or an
-*Emergency* squawk. It polls every 5 seconds (30 in a background tab) and keeps its trail
-in the browser, so a reload mid-flight keeps the line drawn so far.
+rate, ground speed, heading, distance to go, a progress bar and an estimated arrival time,
+the aircraft type and registration, and a status: *Waiting for signal*, *On the ground*,
+*Taxiing*, *In flight*, *Signal lost*, *Landed*, or an *Emergency* squawk. It polls every 5
+seconds (30 in a background tab) and keeps its trail in the browser, so a reload mid-flight
+keeps the line drawn so far.
+
+With `COUNTDOWN_ROUTE` set, times are local to the airport they belong to: the arrival
+estimate reads in the destination's zone, and each leg's altitude chart in the zone it took
+off from. A route looked up from the flight number has no zones, so those times use
+`COUNTDOWN_TZ`.
 
 **Where the data comes from.** Positions are public ADS-B from
 [adsb.fi](https://adsb.fi), falling back to [adsb.lol](https://adsb.lol); routes, when

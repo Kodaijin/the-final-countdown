@@ -1585,7 +1585,7 @@ window.FlightTracker = (function () {
           routeErr = 'COUNTDOWN_ROUTE: no airport with the code <code>' + esc(bad.join(', ')) + '</code>.';
           return;
         }
-        var ap = function (c) { return { code: c, city: db[c][2], lat: db[c][0], lon: db[c][1] }; };
+        var ap = function (c) { return { code: c, city: db[c][2], lat: db[c][0], lon: db[c][1], tz: db[c][3] }; };
         pairs.forEach(function (p, i) { setRoute(legs[i], ap(p[0]), ap(p[1]), null, true); });
       })
       .catch(function () {
@@ -1678,9 +1678,10 @@ window.FlightTracker = (function () {
                : s.indexOf('Emergency') === 0 ? 'emergency' : null;
       if (!type) return;
       var eta = type === 'takeoff' ? etaFor(g) : null;
+      var rt = trustedRoute(g);
       var e = {
         type: type, leg: i, last: i === legs.length - 1, flight: g.ident.shown, status: s,
-        route: trustedRoute(g), eta: eta && clockTime(eta),
+        route: rt, eta: eta && clockTime(eta, rt && rt.to.tz),
         next: legs[i + 1] ? legs[i + 1].ident.shown : null
       };
       listeners.forEach(function (fn) { try { fn(e); } catch (err) {} });
@@ -1811,7 +1812,7 @@ window.FlightTracker = (function () {
         stat('eta', 'Arrived', rt.to.city + (next ? ' · next: ' + next.ident.shown : ''));
       } else if (flying) {
         var eta = fix.t + remKm / kmh * 3600e3;
-        stat('eta', clockTime(eta), 'in ' + duration(eta - Date.now()) + then);
+        stat('eta', clockTime(eta, rt.to.tz), 'in ' + duration(eta - Date.now()) + then);
       } else {
         stat('eta', '—', 'once airborne');
       }
@@ -1868,12 +1869,8 @@ window.FlightTracker = (function () {
     drawPlane();
   }
 
-  function shortTime(ms) {
-    var o = { hour: 'numeric', minute: '2-digit' };
-    if (zone) o.timeZone = zone;
-    try { return new Date(ms).toLocaleTimeString(undefined, o); }
-    catch (e) { return new Date(ms).toLocaleTimeString(); }
-  }
+  // A leg's altitude chart runs on one clock: local time where it took off.
+  function takeoffTime(ms, g) { return clockTime(ms, g.route && g.route.from.tz); }
 
   // ---- altitude chart ----
 
@@ -1922,10 +1919,10 @@ window.FlightTracker = (function () {
       return '<line class="gl" x1="0" x2="' + w + '" y1="' + y + '" y2="' + y + '"/>' +
              (a ? '<text class="ax" x="0" y="' + (y - 4) + '">' + num(a) + ' ft</text>' : '');
     }).join('');
-    var times = '<text class="ax" x="0" y="' + (ALT_H - 2) + '">' + esc(shortTime(t0)) + '</text>' +
-                '<text class="ax" x="' + w + '" y="' + (ALT_H - 2) + '" text-anchor="end">' + esc(shortTime(t1)) + '</text>';
+    var times = '<text class="ax" x="0" y="' + (ALT_H - 2) + '">' + esc(takeoffTime(t0, g)) + '</text>' +
+                '<text class="ax" x="' + w + '" y="' + (ALT_H - 2) + '" text-anchor="end">' + esc(takeoffTime(t1, g)) + '</text>';
     el.altSvg.setAttribute('viewBox', '0 0 ' + w + ' ' + ALT_H);
-    el.altSvg.setAttribute('aria-label', 'Altitude from ' + shortTime(t0) + ' to ' + shortTime(t1) +
+    el.altSvg.setAttribute('aria-label', 'Altitude from ' + takeoffTime(t0, g) + ' to ' + takeoffTime(t1, g) +
                            ', highest ' + num(Math.max.apply(null, pts.map(function (p) { return p[3]; }))) + ' ft');
     el.altSvg.innerHTML = grid + times + '<path class="ar" d="' + area + '"/><path class="ln" d="' + line + '"/>' +
       '<g class="hov" style="display:none"><line class="xh" y1="' + ALT_TOP + '" y2="' + base + '"/><circle class="dot" r="4"/></g>';
@@ -1948,7 +1945,7 @@ window.FlightTracker = (function () {
     var xh = hov.firstChild, dot = hov.lastChild;
     xh.setAttribute('x1', px); xh.setAttribute('x2', px);
     dot.setAttribute('cx', px); dot.setAttribute('cy', py);
-    el.altTip.textContent = (best[3] > 0 ? num(best[3]) + ' ft' : 'Ground') + ' · ' + shortTime(best[2]);
+    el.altTip.textContent = (best[3] > 0 ? num(best[3]) + ' ft' : 'Ground') + ' · ' + takeoffTime(best[2], legs[view]);
     el.altTip.hidden = false;
     var left = r.left - box.left + px / el.altW * r.width;
     el.altTip.style.left = Math.max(70, Math.min(box.width - 70, left)) + 'px';
@@ -1962,13 +1959,14 @@ window.FlightTracker = (function () {
     if (hov) hov.style.display = 'none';
   }
 
-  function clockTime(ms) {
-    var o = { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' };
-    if (zone) o.timeZone = zone;
+  // `tz` is the airport this time belongs to; without one, COUNTDOWN_TZ.
+  function clockTime(ms, tz) {
+    var o = { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }, z = tz || zone;
+    if (z) o.timeZone = z;
     var d = new Date(ms), s;
     try { s = d.toLocaleTimeString(undefined, o); } catch (e) { s = d.toLocaleTimeString(); }
     if (ms - Date.now() > 18 * 3600e3) {
-      try { s = d.toLocaleDateString(undefined, { weekday: 'short', timeZone: zone || undefined }) + ' ' + s; }
+      try { s = d.toLocaleDateString(undefined, { weekday: 'short', timeZone: z || undefined }) + ' ' + s; }
       catch (e) {}
     }
     return s;
